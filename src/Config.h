@@ -16,7 +16,7 @@
 #endif
 
 #ifndef MINOR_VERSION
-#define MINOR_VERSION 0
+#define MINOR_VERSION 1
 #endif
 
 #ifndef BUILD_NUM
