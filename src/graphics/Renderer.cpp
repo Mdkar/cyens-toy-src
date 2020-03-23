@@ -40,6 +40,7 @@
 #define VIDYRES YRES
 #endif
 
+float a = 1023, b = MAX_TEMP, invlnb = a * (1.f / log(b + 1.f));
 
 void Renderer::RenderBegin()
 {
@@ -1366,11 +1367,12 @@ void Renderer::render_parts()
 				//Alter colour based on display mode
 				if (colour_mode & COLOUR_HEAT)
 				{
-					caddress = restrict_flt((int)(restrict_flt((float)(sim->parts[i].temp + (-MIN_TEMP)), 0.0f, MAX_TEMP + (-MIN_TEMP)) / ((MAX_TEMP + (-MIN_TEMP)) / 1024)) * 3, 0.0f, (1024.0f * 3) - 3);
+					//caddress = restrict_flt((int)(restrict_flt((float)(sim->parts[i].temp + (-MIN_TEMP)), 0.0f, MAX_TEMP + (-MIN_TEMP)) / ((MAX_TEMP + (-MIN_TEMP)) / 1024)) * 3, 0.0f, (1024.0f * 3) - 3);
+					caddress = restrict_flt((2.5466622703f*invlnb*log(1.f + restrict_flt(sim->parts[i].temp, 0.f, MAX_TEMP) * 0.00090909090909f)), 0.0f, a); // escala logaritmica
 					firea = 255;
-					firer = colr = color_data[caddress];
-					fireg = colg = color_data[caddress + 1];
-					fireb = colb = color_data[caddress + 2];
+					firer = colr = color_data[3*caddress];
+					fireg = colg = color_data[3*caddress+1];
+					fireb = colb = color_data[3*caddress+2];
 					cola = 255;
 					if (pixel_mode & (FIREMODE | PMODE_GLOW))
 						pixel_mode = (pixel_mode & ~(FIREMODE | PMODE_GLOW)) | PMODE_BLUR;
@@ -2395,8 +2397,9 @@ void Renderer::draw_air()
 			else if (display_mode & DISPLAY_AIRH)
 			{
 				float ttemp = hv[y][x] + (-MIN_TEMP);
-				int caddress = restrict_flt((int)(restrict_flt(ttemp, 0.0f, MAX_TEMP + (-MIN_TEMP)) / ((MAX_TEMP + (-MIN_TEMP)) / 1024)) * 3, 0.0f, (1024.0f * 3) - 3);
-				c = PIXRGB((int)(color_data[caddress] * 0.7f), (int)(color_data[caddress + 1] * 0.7f), (int)(color_data[caddress + 2] * 0.7f));
+				//int caddress = restrict_flt((int)(restrict_flt(ttemp, 0.0f, MAX_TEMP + (-MIN_TEMP)) / ((MAX_TEMP + (-MIN_TEMP)) / 1024)) * 3, 0.0f, (1024.0f * 3) - 3);
+				int caddress = restrict_flt((2.5466622703f*invlnb*log(1.f+ restrict_flt(ttemp, 0.f, MAX_TEMP)*0.00090909090909f)), 0.0f, a);
+				c = PIXRGB((int)(color_data[caddress * 3] * 0.7f), (int)(color_data[3 * caddress + 1] * 0.7f), (int)(color_data[3 * caddress + 2] * 0.7f));
 				//c  = PIXRGB(clamp_flt(fabsf(vx[y][x]), 0.0f, 8.0f),//vx adds red
 				//	clamp_flt(hv[y][x], 0.0f, 1600.0f),//heat adds green
 				//	clamp_flt(fabsf(vy[y][x]), 0.0f, 8.0f));//vy adds blue

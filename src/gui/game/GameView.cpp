@@ -2256,7 +2256,30 @@ void GameView::OnDraw()
 				}
 				if(sample.particle.ionP.type != 0 || sample.particle.ionN.type != 0)
 				{
-					sampleInfo << " [" << c->ElementResolve((int)sample.particle.ionP.type, -1) << "]" << sample.particle.ionP.number << "+" << sample.particle.ionP.charge << " [" << c->ElementResolve((int)sample.particle.ionN.type, -1) << "]" << sample.particle.ionN.number << sample.particle.ionN.charge;
+					sampleInfo << "[" << c->ElementResolve((int)sample.particle.ionP.type, -1)<< "+";
+					if(sample.particle.ionP.charge != 1)
+					{
+						sampleInfo << sample.particle.ionP.charge;
+					}
+					sampleInfo << "]";
+					if(sample.particle.ionP.number != 1)
+					{
+						sampleInfo << sample.particle.ionP.number;
+					}
+					sampleInfo	<< "[" << c->ElementResolve((int)sample.particle.ionN.type, -1);
+					if(sample.particle.ionN.charge != -1)
+					{
+						sampleInfo << sample.particle.ionN.charge;
+					}
+					else
+					{
+						sampleInfo << "-";
+					}
+					sampleInfo<< "]";
+					if(sample.particle.ionN.number != 1)
+					{
+						sampleInfo << sample.particle.ionN.number;
+					}
 				}
 				sampleInfo << ", Temp: " << (sample.particle.temp - 273.15f) << " C";
 				sampleInfo << ", Life: " << sample.particle.life;
