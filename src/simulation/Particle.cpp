@@ -7,6 +7,8 @@ std::vector<StructProperty> const& Particle::GetProperties()
 		{ "type",		   StructProperty::ParticleType, offsetof(Particle, type) },
 		{ "life/C#",	   StructProperty::ParticleType, offsetof(Particle, life) },
 		{ "ctype/OH-pos",  StructProperty::ParticleType, offsetof(Particle, ctype) },
+		{ "ionP", StructProperty::IonStruct, offsetof(Particle, ionP) },
+		{ "ionN", StructProperty::IonStruct, offsetof(Particle, ionN) },
 		{ "x-pos",		   StructProperty::Float,		 offsetof(Particle, x) },
 		{ "y-pos",		   StructProperty::Float,		 offsetof(Particle, y) },
 		{ "x-vel",		   StructProperty::Float,		 offsetof(Particle, vx) },
@@ -21,5 +23,8 @@ std::vector<StructProperty> const& Particle::GetProperties()
 		{ "pavg0",		   StructProperty::Float,		 offsetof(Particle, pavg[0]) },
 		{ "pavg1",		   StructProperty::Float,		 offsetof(Particle, pavg[1]) },
 	};
+	//for(int i = 0; i < ions.size(); i++){
+	//	properties.push_back({"ion", StructProperty::ParticleType, offsetof(Particle, ions[0])});
+	//}
 	return properties;
 }

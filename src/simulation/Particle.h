@@ -23,6 +23,8 @@ struct Particle
 {
 	int type;
 	int life, ctype;
+	ion ionP;
+	ion ionN;
 	float x, y, vx, vy;
 	float temp;
 	float pavg[2];

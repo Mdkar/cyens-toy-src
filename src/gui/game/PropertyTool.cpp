@@ -13,6 +13,7 @@
 #include "gui/dialogues/ErrorMessage.h"
 
 #include "simulation/Simulation.h"
+#include "simulation/Particle.h"
 
 #include "graphics/Graphics.h"
 
@@ -87,6 +88,61 @@ void PropertyWindow::SetProperty()
 		try {
 			switch (properties[property->GetOption().second].Type)
 			{
+			case StructProperty::IonStruct:
+			{
+				int v;
+				int n;
+				int q;
+				if (value.length()>1 && value.BeginsWith('['))
+				{
+					//[Na]2+1
+					int type;
+					int l = value.find(']');
+					String val = value.Substr(1,l-1);
+					if ((type = sim->GetParticleType(val.ToUtf8())) != -1)
+					{
+						v = type;
+					}
+					else
+					{
+						v = val.ToNumber<int>();
+					}
+					int l2 = value.find('+');
+					if(l2 == -1)
+					{
+						l2 = value.find('-');
+						if(l2 == -1)
+						{
+							l2 = value.length()-1;
+							q = 0;
+						}
+						else
+						{
+							q = -(value.Substr(l2+1, value.length()-1-l2).ToNumber<int>());
+						}
+					}
+					else
+					{
+						q = value.Substr(l2+1, value.length()-1-l2).ToNumber<int>();
+					}
+					n = value.Substr(l+1,l2-l-1).ToNumber<int>();
+				}
+				if (properties[property->GetOption().second].Name.find("ion") != -1 && (v < 0 || v >= PT_NUM || !sim->elements[v].Enabled))
+				{
+					new ErrorMessage("Could not set property", "Invalid particle type");
+					return;
+				}
+
+#ifdef DEBUG
+				std::cout << "Got int value " << v << std::endl;
+#endif
+				ion ion;
+				ion.type = v;
+				ion.number = n;
+				ion.charge = q;
+				tool->propValue.IonStruct = ion;
+				break;
+			}
 			case StructProperty::Integer:
 			case StructProperty::ParticleType:
 			{
@@ -243,6 +299,9 @@ void PropertyTool::SetProperty(Simulation* sim, ui::Point position)
 	case StructProperty::ParticleType:
 	case StructProperty::Integer:
 		*((int*)(((char*)& sim->parts[ID(i)]) + propOffset)) = propValue.Integer;
+		break;
+	case StructProperty::IonStruct:
+		*((ion*)(((char*)& sim->parts[ID(i)]) + propOffset)) = propValue.IonStruct;
 		break;
 	case StructProperty::UInteger:
 		*((unsigned int*)(((char*)& sim->parts[ID(i)]) + propOffset)) = propValue.UInteger;

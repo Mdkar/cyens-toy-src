@@ -39,6 +39,7 @@
 #include "simulation/ElementClasses.h"
 
 #include "..//..//simulation/CyensTools.h"
+#include <iostream>
 
 #ifdef GetUserName
 # undef GetUserName // dammit windows
@@ -2252,6 +2253,10 @@ void GameView::OnDraw()
 						sampleInfo << " (" << c->ElementFullName(ctype) << ")";
 					else
 						sampleInfo << " ()";
+				}
+				if(sample.particle.ionP.type != 0 || sample.particle.ionN.type != 0)
+				{
+					sampleInfo << " [" << c->ElementResolve((int)sample.particle.ionP.type, -1) << "]" << sample.particle.ionP.number << "+" << sample.particle.ionP.charge << " [" << c->ElementResolve((int)sample.particle.ionN.type, -1) << "]" << sample.particle.ionN.number << sample.particle.ionN.charge;
 				}
 				sampleInfo << ", Temp: " << (sample.particle.temp - 273.15f) << " C";
 				sampleInfo << ", Life: " << sample.particle.life;

@@ -4,12 +4,19 @@
 #include "common/String.h"
 #include <cstdint>
 
+struct ion {
+	int type;
+	int number;
+	int charge;
+};
+
 struct StructProperty
 {
 	enum PropertyType
 	{
 		TransitionType,
 		ParticleType,
+		IonStruct,
 		Colour,
 		Integer,
 		UInteger,
@@ -45,6 +52,7 @@ union PropertyValue {
 	int Integer;
 	unsigned int UInteger;
 	float Float;
+	ion IonStruct;
 };
 
 #endif
