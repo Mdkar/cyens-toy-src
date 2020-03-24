@@ -12,22 +12,22 @@ void Element::Element_IRON()
 	MenuSection = SC_SOLIDS;
 	Enabled = 1;
 
-	Advection = 0.0f;
-	AirDrag = 0.00f * CFDS;
-	AirLoss = 0.90f;
-	Loss = 0.00f;
-	Collision = 0.0f;
-	Gravity = 0.0f;
+	Advection = 0.4f;
+	AirDrag = 0.04f * CFDS;
+	AirLoss = 0.94f;
+	Loss = 0.95f;
+	Collision = -0.1f;
+	Gravity = 0.3f;
 	Diffusion = 0.00f;
-	HotAir = 0.000f * CFDS;
-	Falldown = 0;
+	HotAir = 0.000f	* CFDS;
+	Falldown = 1;
 
 	Flammable = 0;
 	Explosive = 0;
 	Meltable = 1;
 	Hardness = 50;
 
-	Weight = 100;
+	Weight = 45;
 
 	HeatConduct = 251;
 	Description = "Rusts with salt, can be used for electrolysis of WATR.";
@@ -42,6 +42,15 @@ void Element::Element_IRON()
 	LowTemperatureTransition = NT;
 	HighTemperature = 1687.0f;
 	HighTemperatureTransition = PT_LAVA;
+	GasTemperaturetransition = 3100.f;
+	GasTransition = PT_GASEOUS;
+	PlsmTemperaturetransition = 9999.f;
+	SolidLiquidlatent = 28.9f;
+	LiquidGaslatent = 634.3f;
+	GasPlsmlatent = 5000.f;
+	pressureresistance = 15.f;
+	pressureblock = true;
+	defaultbreak = true;
 
 	Update = &update;
 }

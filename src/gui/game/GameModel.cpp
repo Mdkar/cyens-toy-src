@@ -1021,6 +1021,19 @@ bool GameModel::GetAHeatEnable()
 	return sim->aheat_enable;
 }
 
+void GameModel::setbrokenstate(bool state){
+	sim->brokenstate = state;
+	UpdateQuickOptions();
+	if(state)
+		SetInfoTip("Broken state: On");
+	else
+		SetInfoTip("Broken state: Off");
+}
+
+bool GameModel::Getbrokenstate(){
+	return sim->brokenstate;
+}
+
 void GameModel::SetNewtonianGravity(bool newtonainGravity)
 {
 	if (newtonainGravity)

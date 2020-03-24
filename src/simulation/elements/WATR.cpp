@@ -43,8 +43,19 @@ void Element::Element_WATR()
 	LowTemperatureTransition = PT_ICEI;
 	HighTemperature = 373.0f;
 	HighTemperatureTransition = PT_WTRV;
+	GasTemperaturetransition = ITH;
+	GasTransition = NT;
+	PlsmTemperaturetransition = -1;
+	SolidLiquidlatent = 52.f;
+	LiquidGaslatent = 350.f;
+	GasPlsmlatent = 5000.f;
 
 	Update = &update;
+}
+
+static bool hasIons(Particle part)
+{
+	return part.ionP.type != 0 || part.ionN.type != 0;
 }
 
 static int update(UPDATE_FUNC_ARGS)
@@ -57,6 +68,30 @@ static int update(UPDATE_FUNC_ARGS)
 				r = pmap[y + ry][x + rx];
 				if (!r)
 					continue;
+				if(TYP(r) == PT_WATR && RNG::Ref().chance(1, 10) && (hasIons(parts[ID(r)]) || hasIons(parts[i])))
+				{
+					//swap ions
+					int type, num, charge;
+					type = parts[i].ionP.type;
+					num = parts[i].ionP.number;
+					charge = parts[i].ionP.charge;
+					parts[i].ionP.type = parts[ID(r)].ionP.type;
+					parts[i].ionP.number = parts[ID(r)].ionP.number;
+					parts[i].ionP.charge = parts[ID(r)].ionP.charge;
+					parts[ID(r)].ionP.type = type;
+					parts[ID(r)].ionP.number = num;
+					parts[ID(r)].ionP.charge = charge;
+					type = parts[i].ionN.type;
+					num = parts[i].ionN.number;
+					charge = parts[i].ionN.charge;
+					parts[i].ionN.type = parts[ID(r)].ionN.type;
+					parts[i].ionN.number = parts[ID(r)].ionN.number;
+					parts[i].ionN.charge = parts[ID(r)].ionN.charge;
+					parts[ID(r)].ionN.type = type;
+					parts[ID(r)].ionN.number = num;
+					parts[ID(r)].ionN.charge = charge;
+
+				}
 				if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50))
 				{
 					sim->part_change_type(i, x, y, PT_SLTW);

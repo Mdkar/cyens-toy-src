@@ -2944,7 +2944,7 @@ int Simulation::is_blocking(int t, int x, int y)
 		return 0;
 	}
 
-	return !eval_move(t, x, y, NULL, -1);
+	return !eval_move(t, x, y, NULL, 0);
 }
 
 int Simulation::is_boundary(int pt, int x, int y)

@@ -1402,6 +1402,9 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 	case SDL_SCANCODE_U:
 		c->ToggleAHeat();
 		break;
+	case SDL_SCANCODE_M:
+		c->togglebrokenstate();
+		break;
 	case SDL_SCANCODE_N:
 		c->ToggleNewtonianGravity();
 		break;
@@ -2139,6 +2142,13 @@ void GameView::OnDraw()
 				if (type == PT_LAVA && c->IsValidElement(ctype))
 				{
 					sampleInfo << "Molten " << c->ElementResolve(ctype, -1);
+				}
+				else if(c->istypeproperties(type, TYPE_SOLID) && sample.particle.tmp2 == 1000 && c->isdefaultbreak(type))
+				{
+					sampleInfo << "Broken " << c->ElementResolve(type, ctype);
+					if(c->IsValidElement(ctype)){
+						sampleInfo << " (" << c->ElementResolve(ctype, -1) << ")";
+					}
 				}
 				else if ((type == PT_PIPE || type == PT_PPIP) && c->IsValidElement(ctype))
 				{

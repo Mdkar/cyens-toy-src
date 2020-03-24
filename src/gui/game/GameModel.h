@@ -177,6 +177,8 @@ public:
 	void SetDecoration(bool decorationState);
 	bool GetAHeatEnable();
 	void SetAHeatEnable(bool aHeat);
+	bool Getbrokenstate();
+	void setbrokenstate(bool state);
 	bool GetNewtonianGrvity();
 	void SetNewtonianGravity(bool newtonainGravity);
 

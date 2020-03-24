@@ -160,6 +160,9 @@ public:
 	String nucleotideName(int l, int t);
 	String ElementFullName(int t);
 
+	int istypeproperties(int type, int type2);
+	bool isdefaultbreak(int type);
+
 	void ResetAir();
 	void ResetSpark();
 	void SwitchGravity();
@@ -167,6 +170,7 @@ public:
 	void ToggleAHeat();
 	bool GetAHeatEnable();
 	void ToggleNewtonianGravity();
+	void togglebrokenstate();
 
 	//Cyens Toy options
 	void ToggleTimeDilation();
