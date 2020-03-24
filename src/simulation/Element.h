@@ -35,6 +35,11 @@ public:
 	int Explosive;
 	int Meltable;
 	int Hardness;
+	float Temperature;
+	// broken state
+	float pressureresistance = 0.f;
+	bool pressureblock = false;
+	bool defaultbreak = false;
 	// Photon wavelengths are ANDed with this value when a photon hits an element, meaning that only wavelengths present in both this value and the original photon will remain in the reflected photon
 	unsigned int PhotonReflectWavelengths;
 	int Weight;
@@ -50,6 +55,18 @@ public:
 	int LowTemperatureTransition;
 	float HighTemperature;
 	int HighTemperatureTransition;
+	// new transitions
+	float GasTemperaturetransition = MAX_TEMP+1.f;
+	int GasTransition = -1;
+	float PlsmTemperaturetransition = -1.f;
+	float solidtransition = 0;
+	// heat latent transition not fully not fully Removed -lazy
+	float Liquidtransition = -1.f;
+	float SolidLiquidlatent = 0.f;
+	float LiquidGaslatent = 0.f;
+	float GasPlsmlatent = 5000.f; // default
+	// radioactive special reacion not fully removed
+	bool specialupdate = false;
 
 	int (*Update) (UPDATE_FUNC_ARGS);
 	int (*Graphics) (GRAPHICS_FUNC_ARGS);
@@ -75,7 +92,7 @@ public:
 	/** Returns a list of properties, their type and offset within the structure that can be changed
 	 by higher-level processes referring to them by name such as Lua or the property tool **/
 	static std::vector<StructProperty> const &GetProperties();
-
+#define NT -1
 #define ELEMENT_NUMBERS_DECLARE
 #include "ElementNumbers.h"
 #undef ELEMENT_NUMBERS_DECLARE

@@ -54,6 +54,8 @@ public:
 	int currentTick;
 	int replaceModeSelected;
 	int replaceModeFlags;
+	int blockcount[YRES / CELL][XRES / CELL];
+	float diffdt;
 
 	//Cyens Toy fields
 	v2f strongForce[YRES][XRES];
@@ -74,6 +76,7 @@ public:
 	bool etrd_count_valid;
 	int etrd_life0_count;
 	int lightningRecreate;
+	bool brokenstate = false;
 	//Stickman
 	playerst player;
 	playerst player2;
@@ -146,12 +149,13 @@ public:
 	unsigned direction_to_map(float dx, float dy, int t);
 	int do_move(int i, int x, int y, float nxf, float nyf);
 	int try_move(int i, int x, int y, int nx, int ny);
-	int eval_move(int pt, int nx, int ny, unsigned* rr);
+	int eval_move(int pt, int nx, int ny, unsigned* rr, int id);
 	void init_can_move();
 	bool IsWallBlocking(int x, int y, int type);
 	bool IsValidElement(int type) {
 		return (type >= 0 && type < PT_NUM && elements[type].Enabled);
 	}
+	void addpressure(float k,int i ,int y, int x);
 	void create_cherenkov_photon(int pp);
 	void create_gain_photon(int pp);
 	void kill_part(int i);

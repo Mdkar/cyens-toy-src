@@ -891,10 +891,10 @@ bool Simulation::flood_water(int x, int y, int i)
 				{
 					// Try to move the water to a random position on this line, because there's probably a free location somewhere
 					int randPos = RNG::Ref().between(x, x2);
-					if (!pmap[y - 1][randPos] && eval_move(parts[i].type, randPos, y - 1, nullptr))
+					if (!pmap[y - 1][randPos] && eval_move(parts[i].type, randPos, y - 1, nullptr, i))
 						x = randPos;
 					// Couldn't move to random position, so try the original position on the left
-					else if (!eval_move(parts[i].type, x, y - 1, nullptr))
+					else if (!eval_move(parts[i].type, x, y - 1, nullptr, i))
 						continue;
 
 					int oldx = (int)(parts[i].x + 0.5f);
@@ -2457,7 +2457,7 @@ void Simulation::init_can_move()
 0 = No move/Bounce
 2 = Both particles occupy the same space.
  */
-int Simulation::eval_move(int pt, int nx, int ny, unsigned* rr)
+int Simulation::eval_move(int pt, int nx, int ny, unsigned* rr, int id)
 {
 	unsigned r;
 	int result;
@@ -2473,6 +2473,11 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned* rr)
 	if (pt >= PT_NUM || TYP(r) >= PT_NUM)
 		return 0;
 	result = can_move[pt][TYP(r)];
+	if(!(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 < 1000) && pt != PT_CNCT){
+		if(elements[pt].Weight > elements[TYP(r)].Weight && !(elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 < 1000) && TYP(r) != PT_CNCT){
+			result = 1;
+		}
+	}
 	if (result == 3)
 	{
 		switch (TYP(r))
@@ -2534,7 +2539,7 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned* rr)
 	{
 		if (IsWallBlocking(nx, ny, pt))
 			return 0;
-		if (bmap[ny / CELL][nx / CELL] == WL_EHOLE && !emap[ny / CELL][nx / CELL] && !(elements[pt].Properties & TYPE_SOLID) && !(elements[TYP(r)].Properties & TYPE_SOLID))
+		if (bmap[ny / CELL][nx / CELL] == WL_EHOLE && !emap[ny / CELL][nx / CELL] && !(elements[pt].Properties & TYPE_SOLID && parts[id].tmp2 < 1000) && !(elements[TYP(r)].Properties & TYPE_SOLID && parts[ID(r)].tmp2 < 1000))
 			return 2;
 	}
 	return result;
@@ -2549,7 +2554,7 @@ int Simulation::try_move(int i, int x, int y, int nx, int ny)
 	if (nx < 0 || ny < 0 || nx >= XRES || ny >= YRES)
 		return 1;
 
-	e = eval_move(parts[i].type, nx, ny, &r);
+	e = eval_move(parts[i].type, nx, ny, &r, i);
 
 	/* half-silvered mirror */
 	if (!e && parts[i].type == PT_PHOT && ((TYP(r) == PT_BMTL && RNG::Ref().chance(1, 2)) || TYP(pmap[y][x]) == PT_BMTL))
@@ -2939,7 +2944,7 @@ int Simulation::is_blocking(int t, int x, int y)
 		return 0;
 	}
 
-	return !eval_move(t, x, y, NULL);
+	return !eval_move(t, x, y, NULL, -1);
 }
 
 int Simulation::is_boundary(int pt, int x, int y)
@@ -3186,7 +3191,7 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 		// If there isn't a particle but there is a wall, check whether the new particle is allowed to be in it
 		//   (not "!=2" for wall check because eval_move returns 1 for moving into empty space)
 		// If there's no particle and no wall, assume creation is allowed
-		if (pmap[y][x] ? (eval_move(t, x, y, NULL) != 2) : (bmap[y / CELL][x / CELL] && eval_move(t, x, y, NULL) == 0))
+		if (pmap[y][x] ? (eval_move(t, x, y, NULL, p) != 2) : (bmap[y / CELL][x / CELL] && eval_move(t, x, y, NULL, p) == 0))
 		{
 			return -1;
 		}
@@ -3234,6 +3239,9 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 	parts[i].type = t;
 	parts[i].x = (float)x;
 	parts[i].y = (float)y;
+	if(elements[t].Properties&TYPE_SOLID && elements[t].pressureresistance > 0 && brokenstate && p == -2){
+		parts[i].tmp2 = 1000;
+	}
 
 	//and finally set the pmap/photon maps to the newly created particle
 	if (elements[t].Properties & TYPE_ENERGY)
@@ -3402,6 +3410,16 @@ void Simulation::delete_part(int x, int y)//calls kill_part with the particle lo
 	kill_part(ID(i));
 }
 
+void Simulation::addpressure(float k,int i, int y, int x){
+	if(!bmap[y][x]){
+		pv[y][x] += k;
+	}
+	//lets not deal with storepressure
+	/*else{
+		storepressure[i] += k;
+	}*/
+}
+
 //Cyens Toy Field Update
 void Simulation::UpdateCyensFields() {
 	float sfFade = 0.975f;
@@ -3420,15 +3438,15 @@ void Simulation::UpdateCyensFields() {
 
 void Simulation::UpdateParticles(int start, int end)
 {
-	int i, j, x, y, t, nx, ny, r, surround_space, s, rt, nt;
+	int i, j, x, y, t, nx, ny, r, surround_space, s, rt, nt, ctypep, tmpp;
 	float mv, dx, dy, nrx, nry, dp, ctemph, ctempl, gravtot;
-	int fin_x, fin_y, clear_x, clear_y, stagnant;
-	float fin_xf, fin_yf, clear_xf, clear_yf;
-	float nn, ct1, ct2, swappage;
+	int fin_x, fin_y, clear_x, clear_y, stagnant, type3;
+	float fin_xf, fin_yf, clear_xf, clear_yf, diffx, diffy;
+	float nn, ct1, ct2, swappage, air1, air2;
 	float pt = R_TEMP;
 	float c_heat = 0.0f;
 	int h_count = 0;
-	int surround[8];
+	int surround[8], type2;
 	int surround_hconduct[8];
 	float pGravX, pGravY, pGravD;
 	bool transitionOccurred;
@@ -3443,6 +3461,14 @@ void Simulation::UpdateParticles(int start, int end)
 
 			x = (int)(parts[i].x + 0.5f);
 			y = (int)(parts[i].y + 0.5f);
+
+			//update blockair
+			if((parts[i].tmp2 < 1000 && elements[t].defaultbreak || !elements[t].defaultbreak) && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
+				blockcount[y / CELL][x / CELL] ++;
+				if(blockcount[y / CELL][x / CELL] >= 2){
+					air->bmap_blockair[y / CELL][x / CELL] = true;
+				}
+			}
 
 			//this kills any particle out of the screen, or in a wall where it isn't supposed to go
 			if (x < CELL || y < CELL || x >= XRES - CELL || y >= YRES - CELL ||
@@ -3470,7 +3496,7 @@ void Simulation::UpdateParticles(int start, int end)
 			if (bmap[y / CELL][x / CELL] == WL_DETECT && emap[y / CELL][x / CELL] < 8)
 				set_emap(x / CELL, y / CELL);
 
-			//Cyens Toy time dilation 
+			//Cyens Toy time dilation
 			bool canTick = true;
 
 			if (timeDilationEnabled) {
@@ -3483,7 +3509,7 @@ void Simulation::UpdateParticles(int start, int end)
 			else parts[i].timeDilationTimer = 0;
 
 			//adding to velocity from the particle's velocity
-			if (canTick) {
+			if (canTick && (!(parts[i].tmp2 < 1000) || !(elements[t].Properties&TYPE_SOLID))) {
 				vx[y / CELL][x / CELL] = vx[y / CELL][x / CELL] * elements[t].AirLoss + elements[t].AirDrag * parts[i].vx;
 				vy[y / CELL][x / CELL] = vy[y / CELL][x / CELL] * elements[t].AirLoss + elements[t].AirDrag * parts[i].vy;
 			}
@@ -3519,7 +3545,7 @@ void Simulation::UpdateParticles(int start, int end)
 			}
 
 			pGravX = pGravY = 0;
-			if (!(elements[t].Properties & TYPE_SOLID))
+			if (!(elements[t].Properties & TYPE_SOLID && parts[i].tmp2 < 1000))
 			{
 				if (elements[t].Gravity)
 				{
@@ -3712,6 +3738,9 @@ void Simulation::UpdateParticles(int start, int end)
 					{
 						// particle type change due to high temperature
 #ifdef REALISTIC
+						if(elements[t].pressureresistance > 0 && parts[i].tmp2 == 1000){
+								parts[i].tmp2 = 0;
+						}
 						float dbt = ctempl - pt;
 						if (elements[t].HighTemperatureTransition != PT_NUM)
 						{
@@ -3948,7 +3977,114 @@ void Simulation::UpdateParticles(int start, int end)
 							parts[i].life = RNG::Ref().between(240, 359);
 						}
 						transitionOccurred = true;
+						goto transited;
 					}
+					//// variable boiling point for PT_LIQUID and PT_GASEOUS
+					if(t == PT_LAVA && elements[parts[i].ctype].GasTransition != NT){
+						ctemph = pt - 2.0f*pv[y/CELL][x/CELL];
+					}else if(t == PT_GASEOUS && elements[parts[i].ctype].GasTransition != NT){
+						ctempl = pt - 2.0f*pv[y/CELL][x/CELL];
+					} else if(elements[t].Liquidtransition > 0){
+						ctempl = pt - 2.0f*pv[y / CELL][x / CELL];
+					} else if(t == PT_LIQUID && elements[parts[i].ctype].Liquidtransition > 0){
+						ctemph = pt - 2.0f*pv[y / CELL][x / CELL];
+					}
+
+					tmpp = parts[i].tmp;
+
+					////COLD GAS -> LIQUID TRANSITION
+					if(ctempl < elements[t].Liquidtransition && elements[t].Liquidtransition > 0){
+						//pv[y / CELL][x / CELL] -= 0.00512f*elements[t].Liquidtransition;
+						addpressure(-0.00256f*elements[t].Liquidtransition, i, y / CELL, x / CELL);
+						parts[i].temp += elements[t].LiquidGaslatent;
+						parts[i].ctype = parts[i].type;
+						t = parts[i].type = PT_LIQUID;
+						//parts[i].tmp = tmpp;
+						goto transited;
+					}else if(t == PT_LIQUID && ctemph >= elements[parts[i].ctype].Liquidtransition && elements[parts[i].ctype].Liquidtransition > 0){
+						//pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].Liquidtransition;
+						addpressure(0.00256f*elements[parts[i].ctype].Liquidtransition, i, y / CELL, x / CELL);
+						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
+						t = parts[i].type = parts[i].ctype;
+						parts[i].ctype = PT_NONE;
+						//parts[i].tmp = tmpp;
+						goto transited;
+					}
+					////HOT GASEOUS transition
+					if (pt >= elements[t].GasTemperaturetransition && ((t != PT_LAVA && t != PT_BRMT) || parts[i].ctype == PT_NONE) && elements[t].GasTransition!=NT) {
+						//pv[y / CELL][x / CELL] += 0.00512f*elements[t].GasTemperaturetransition;
+						addpressure(0.00256f*elements[t].GasTemperaturetransition, i, y / CELL, x / CELL);
+						//if(t != PT_BRMT){
+							parts[i].temp -= elements[t].LiquidGaslatent;
+							parts[i].ctype = parts[i].type;
+							t = parts[i].type = PT_GASEOUS;
+						//}
+						parts[i].tmp = tmpp;
+						goto transited;
+					}else if (t == PT_GASEOUS && ctempl < elements[parts[i].ctype].GasTemperaturetransition) {
+						//pv[y / CELL][x / CELL] -= 0.00512*elements[parts[i].ctype].GasTemperaturetransition;
+						addpressure(-0.00256*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp += elements[parts[i].ctype].LiquidGaslatent;
+						t = parts[i].type = parts[i].ctype;
+						parts[i].ctype = PT_NONE;
+						parts[i].tmp = tmpp;
+						goto transited;
+					} else if(t==PT_LAVA && ctemph >=elements[parts[i].ctype].GasTemperaturetransition && elements[parts[i].ctype].GasTransition!=NT){
+						//pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
+						addpressure(0.00256f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
+						t = parts[i].type = PT_GASEOUS;
+						parts[i].tmp = tmpp;
+						goto transited;
+					}else if(t == PT_BRMT && ctemph >= elements[parts[i].ctype].GasTemperaturetransition && elements[parts[i].ctype].GasTransition != NT){
+					   //pv[y / CELL][x / CELL] += 0.00512f*elements[parts[i].ctype].GasTemperaturetransition;
+						addpressure(0.00256f*elements[parts[i].ctype].GasTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp -= elements[parts[i].ctype].LiquidGaslatent;
+						t = parts[i].type = PT_GASEOUS;
+						parts[i].tmp = tmpp;
+						goto transited;
+					}
+					////PLSM transition
+					if(t == PT_GASEOUS && pt >= elements[parts[i].ctype].PlsmTemperaturetransition &&  elements[parts[i].ctype].PlsmTemperaturetransition != -1) {
+						addpressure(0.00256f*elements[parts[i].ctype].PlsmTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp -= elements[parts[i].ctype].GasPlsmlatent;
+						ctypep = parts[i].ctype;
+						create_part(i, parts[i].x, parts[i].y, PT_PLSM);
+						parts[i].ctype = ctypep;
+						parts[i].tmp = tmpp;
+						parts[i].temp = pt;
+						t = PT_PLSM;
+						parts[i].tmp2 = 1;
+						goto transited;
+					}else if (t == PT_PLSM && pt < elements[parts[i].ctype].PlsmTemperaturetransition &&  elements[parts[i].ctype].PlsmTemperaturetransition > -1) {
+						addpressure(-0.00256f*elements[parts[i].ctype].PlsmTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp += elements[parts[i].ctype].GasPlsmlatent;
+						if(elements[parts[i].ctype].GasTransition != NT){
+							t = parts[i].type = PT_GASEOUS;
+						} else{
+							t = parts[i].type = parts[i].ctype;
+							parts[i].ctype = PT_NONE;
+						}
+						parts[i].tmp = tmpp;
+						parts[i].temp = pt;
+						parts[i].tmp2 = 0;
+						goto transited;
+					} else if(pt >= elements[t].PlsmTemperaturetransition && elements[t].PlsmTemperaturetransition != -1 && t != PT_LAVA){
+						addpressure(0.00256f*elements[t].PlsmTemperaturetransition, i, y / CELL, x / CELL);
+						parts[i].temp -= elements[t].GasPlsmlatent;
+						ctypep = parts[i].type;
+						create_part(i, parts[i].x, parts[i].y, PT_PLSM);
+						parts[i].ctype = ctypep;
+						parts[i].tmp = tmpp;
+						parts[i].temp = pt;
+						t = PT_PLSM;
+						parts[i].tmp2 = 1;
+						goto transited;
+					}
+
+					s = 0;
+					//deltap = pv[y/CELL][x/CELL] - dpv[y/CELL][x/CELL]; // not yet
+				    transited:
 
 					pt = parts[i].temp = restrict_flt(parts[i].temp, MIN_TEMP, MAX_TEMP);
 					if (t == PT_LAVA)
@@ -4081,6 +4217,51 @@ void Simulation::UpdateParticles(int start, int end)
 					parts[i].life = RNG::Ref().between(120, 169);
 				transitionOccurred = true;
 			}
+			//update pressure resistance, and change to broken state, using tmp2 == 1000
+			if(parts[i].tmp2 < 1000 && elements[t].pressureresistance > 0 && elements[t].Properties&TYPE_SOLID){
+				parts[i].tmp2 = 0;
+				for(int yy = -1; yy <= 1; yy++){
+					for(int xx = -1; xx <= 1; xx++){
+						type2 = pmap[y + yy][x + xx];
+						if(elements[TYP(type2)].Properties&TYPE_SOLID && parts[ID(type2)].tmp2 < 1000){
+							parts[i].tmp2 += elements[TYP(type2)].pressureresistance;
+						}
+					}
+				}
+				parts[i].tmp2 *= 0.111111f;
+
+				if(!bmap[y / CELL + 1][x / CELL]){
+					air1 = pv[y / CELL + 1][x / CELL];
+				} else{
+					air1 = 0;
+				}
+				if(!bmap[y / CELL - 1][x / CELL]){
+					air2 = pv[y / CELL - 1][x / CELL];
+				} else{
+					air2 = 0;
+				}
+				diffy = air1 - air2;
+
+				if(!bmap[y / CELL][x / CELL + 1]){
+					air1 = pv[y / CELL][x / CELL + 1];
+				} else{
+					air1 = 0;
+				}
+				if(!bmap[y / CELL][x / CELL - 1]){
+					air2 = pv[y / CELL][x / CELL - 1];
+				} else{
+					air2 = 0;
+				}
+				diffx = air1 - air2;
+
+				//diffy = pv[y / CELL + 1][x / CELL] - pv[y / CELL - 1][x / CELL];
+				//diffx = pv[y / CELL][x / CELL + 1] - pv[y / CELL][x / CELL - 1];
+				diffdt = gravtot + sqrt(diffy*diffy+diffx*diffx);
+
+				if(diffdt > parts[i].tmp2 && elements[t].defaultbreak){
+					parts[i].tmp2 = 1000;
+				}
+			}
 
 			//call the particle update function, if there is one
 #if !defined(RENDERER) && defined(LUACONSOLE)
@@ -4092,8 +4273,16 @@ void Simulation::UpdateParticles(int start, int end)
 				x = (int)(parts[i].x + 0.5f);
 				y = (int)(parts[i].y + 0.5f);
 			}
+			type3 = t;
+			if(IsValidElement(parts[i].ctype) && parts[i].ctype != PT_NONE){
+				if(elements[parts[i].ctype].specialupdate == true){
+					if(t == PT_PLSM || t == PT_GASEOUS || t == PT_LAVA || t == PT_LIQUID || t == PT_SOLID){
+						type3 = parts[i].ctype;
+					}
+				}
+			}
 
-			if (elements[t].Update && lua_el_mode[t] != 2)
+			if (elements[type3].Update && lua_el_mode[type3] != 2)
 #else
 			if (elements[t].Update)
 #endif
@@ -4240,7 +4429,7 @@ void Simulation::UpdateParticles(int start, int end)
 					}
 					//block if particle can't move (0), or some special cases where it returns 1 (can_move = 3 but returns 1 meaning particle will be eaten)
 					//also photons are still blocked (slowed down) by any particle (even ones it can move through), and absorb wall also blocks particles
-					int eval = eval_move(t, fin_x, fin_y, NULL);
+					int eval = eval_move(t, fin_x, fin_y, NULL, i);
 					if (!eval || (can_move[t][TYP(pmap[fin_y][fin_x])] == 3 && eval == 1) || (t == PT_PHOT && pmap[fin_y][fin_x]) || bmap[fin_y / CELL][fin_x / CELL] == WL_DESTROYALL || closedEholeStart != (bmap[fin_y / CELL][fin_x / CELL] == WL_EHOLE && !emap[fin_y / CELL][fin_x / CELL]))
 					{
 						// found an obstacle
@@ -4331,7 +4520,7 @@ void Simulation::UpdateParticles(int start, int end)
 						continue;
 					}
 
-					if (eval_move(PT_PHOT, fin_x, fin_y, NULL))
+					if (eval_move(PT_PHOT, fin_x, fin_y, NULL, i))
 					{
 						int rt = TYP(pmap[fin_y][fin_x]);
 						int lt = TYP(pmap[y][x]);
@@ -4446,7 +4635,7 @@ void Simulation::UpdateParticles(int start, int end)
 					}
 				}
 			}
-			else if (elements[t].Falldown == 0)
+			else if (elements[t].Falldown==0 || ((parts[i].tmp2 < 1000) && (elements[t].Properties&TYPE_SOLID)))
 			{
 				// gasses and solids (but not powders)
 				if (!do_move(i, x, y, fin_xf, fin_yf))
