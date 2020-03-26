@@ -27,8 +27,7 @@ void Element::Element_GASEOUS()
 	Hardness = 0;
 
 	Weight = 2;
-
-	Temperature = R_TEMP+0.0f +273.15f;
+	
 	HeatConduct = 251;
 	Description = "GASEOUS";
 

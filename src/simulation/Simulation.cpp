@@ -2473,7 +2473,15 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned* rr, int id)
 	if (pt >= PT_NUM || TYP(r) >= PT_NUM)
 		return 0;
 	result = can_move[pt][TYP(r)];
-	if(!(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 < 1000) && pt != PT_CNCT){
+	if(id < 0)
+	{
+		if(!(elements[pt].Properties&TYPE_SOLID) && pt != PT_CNCT)
+		{
+			if(elements[pt].Weight > elements[TYP(r)].Weight && !(elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 < 1000) && TYP(r) != PT_CNCT){
+				result = 1;
+			}
+		}
+	} else if(!(elements[pt].Properties&TYPE_SOLID && parts[id].tmp2 < 1000) && pt != PT_CNCT){
 		if(elements[pt].Weight > elements[TYP(r)].Weight && !(elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 < 1000) && TYP(r) != PT_CNCT){
 			result = 1;
 		}
@@ -2539,7 +2547,7 @@ int Simulation::eval_move(int pt, int nx, int ny, unsigned* rr, int id)
 	{
 		if (IsWallBlocking(nx, ny, pt))
 			return 0;
-		if (bmap[ny / CELL][nx / CELL] == WL_EHOLE && !emap[ny / CELL][nx / CELL] && !(elements[pt].Properties & TYPE_SOLID && parts[id].tmp2 < 1000) && !(elements[TYP(r)].Properties & TYPE_SOLID && parts[ID(r)].tmp2 < 1000))
+		if (bmap[ny / CELL][nx / CELL] == WL_EHOLE && !emap[ny / CELL][nx / CELL] && !(elements[pt].Properties & TYPE_SOLID && parts[id].tmp2 < 1000) && !(elements[TYP(r)].Properties&TYPE_SOLID && parts[ID(r)].tmp2 < 1000))
 			return 2;
 	}
 	return result;
@@ -2944,7 +2952,7 @@ int Simulation::is_blocking(int t, int x, int y)
 		return 0;
 	}
 
-	return !eval_move(t, x, y, NULL, 0);
+	return !eval_move(t, x, y, NULL, -1);
 }
 
 int Simulation::is_boundary(int pt, int x, int y)
@@ -3058,6 +3066,7 @@ int Simulation::get_normal_interp(int pt, float x0, float y0, float dx, float dy
 
 void Simulation::kill_part(int i)//kills particle number i
 {
+	delete parts[i].ions;
 	int x = (int)(parts[i].x + 0.5f);
 	int y = (int)(parts[i].y + 0.5f);
 
@@ -3463,7 +3472,7 @@ void Simulation::UpdateParticles(int start, int end)
 			y = (int)(parts[i].y + 0.5f);
 
 			//update blockair
-			if((parts[i].tmp2 < 1000 && elements[t].defaultbreak || !elements[t].defaultbreak) && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
+			if(((parts[i].tmp2 < 1000 && elements[t].defaultbreak) || !elements[t].defaultbreak) && (elements[t].Properties&TYPE_SOLID) && !air->bmap_blockair[y][x] && elements[t].pressureblock){
 				blockcount[y / CELL][x / CELL] ++;
 				if(blockcount[y / CELL][x / CELL] >= 2){
 					air->bmap_blockair[y / CELL][x / CELL] = true;

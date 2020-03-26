@@ -27,7 +27,7 @@ void Element::Element_SOLID()
 
 	Weight = 0.5;
 
-	Temperature = R_TEMP-50.0f+273.15f;
+	DefaultProperties.temp = R_TEMP - 50.0f + 273.15f;
 	HeatConduct = 10;
 	Description = "Solid state.";
 

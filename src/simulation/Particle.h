@@ -25,6 +25,7 @@ struct Particle
 	int life, ctype;
 	ion ionP;
 	ion ionN;
+	std::vector<ion>* ions;
 	float x, y, vx, vy;
 	float temp;
 	float pavg[2];

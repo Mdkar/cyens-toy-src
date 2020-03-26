@@ -55,7 +55,7 @@ void Element::Element_COAL()
 int Element_COAL_update(UPDATE_FUNC_ARGS)
 {
 	if (parts[i].life <= 0) {
-		sim->create_part(i, x, y, rand() % 100 < 10 ? PT_CRBN : (rand() % 100 < 33 ? PT_CO : PT_FIRE));
+		sim->create_part(i, x, y, rand() % 100 < 10 ? PT_CRBN : (rand() % 100 < 33 ? PT_CMO : PT_FIRE));
 		return 1;
 	}
 	else if (parts[i].life < 100) {

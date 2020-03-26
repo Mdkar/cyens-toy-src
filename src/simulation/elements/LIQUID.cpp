@@ -28,7 +28,7 @@ void Element::Element_LIQUID()
 
 	Weight = 3;
 
-	Temperature = R_TEMP-2.0f	+273.15f;
+	DefaultProperties.temp = R_TEMP - 2.0f + 273.15f;
 	HeatConduct = 23;
 	Description = "liquid state.";
 

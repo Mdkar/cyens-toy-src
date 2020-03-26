@@ -3,11 +3,15 @@
 
 #include "common/String.h"
 #include <cstdint>
+#include <vector>
 
 struct ion {
 	int type;
 	int number;
 	int charge;
+	bool operator==(int typ2) {
+  	return type == typ2;
+  }
 };
 
 struct StructProperty
@@ -17,6 +21,7 @@ struct StructProperty
 		TransitionType,
 		ParticleType,
 		IonStruct,
+		Vector,
 		Colour,
 		Integer,
 		UInteger,
@@ -53,6 +58,7 @@ union PropertyValue {
 	unsigned int UInteger;
 	float Float;
 	ion IonStruct;
+	std::vector<ion>* Vector;
 };
 
 #endif

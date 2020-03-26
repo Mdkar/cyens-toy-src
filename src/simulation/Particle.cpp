@@ -9,6 +9,7 @@ std::vector<StructProperty> const& Particle::GetProperties()
 		{ "ctype/OH-pos",  StructProperty::ParticleType, offsetof(Particle, ctype) },
 		{ "ionP", StructProperty::IonStruct, offsetof(Particle, ionP) },
 		{ "ionN", StructProperty::IonStruct, offsetof(Particle, ionN) },
+		{ "ions", StructProperty::Vector, offsetof(Particle, ions) },
 		{ "x-pos",		   StructProperty::Float,		 offsetof(Particle, x) },
 		{ "y-pos",		   StructProperty::Float,		 offsetof(Particle, y) },
 		{ "x-vel",		   StructProperty::Float,		 offsetof(Particle, vx) },

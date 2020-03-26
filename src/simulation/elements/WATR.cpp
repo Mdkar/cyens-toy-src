@@ -57,6 +57,20 @@ static bool hasIons(Particle part)
 {
 	return part.ionP.type != 0 || part.ionN.type != 0;
 }
+static bool isSoluble(int cat, int an)//TODO: add polyatomic ions
+{
+	if(cat == PT_LI || cat == PT_NA || cat == PT_K || cat == PT_RB || cat == PT_CS || cat == PT_FR)
+		return true; //Group 1 always soluble
+	if(an == PT_CL || an == PT_BR || an == PT_I)
+	{
+		if(cat == PT_AG || cat == PT_PB || cat == PT_CU || cat == PT_HG)
+		{
+			return false; //Cl, Br, I exceptions
+		}
+		return true;
+	}
+	return false;
+}
 
 static int update(UPDATE_FUNC_ARGS)
 {
@@ -92,12 +106,28 @@ static int update(UPDATE_FUNC_ARGS)
 					parts[ID(r)].ionN.charge = charge;
 
 				}
-				if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50))
+				if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50) && isSoluble(parts[r].ionP.type, parts[r].ionN.type))
 				{
-					sim->part_change_type(i, x, y, PT_SLTW);
+					//sim->part_change_type(i, x, y, PT_SLTW);
 					// on average, convert 3 WATR to SLTW before SALT turns into SLTW
-					if (RNG::Ref().chance(1, 3))
-						sim->part_change_type(ID(r), x + rx, y + ry, PT_SLTW);
+					if (!hasIons(parts[i]) && RNG::Ref().chance(1, 2))//replace chance with solubility?
+					{
+						sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);
+						if (RNG::Ref().chance(999, 1000))
+							sim->kill_part(i); //increase volume tiny amount
+					}
+					if (hasIons(parts[i])) //TODO: precipitation reaction
+					{
+						if(!isSoluble(parts[i].ionP.type, parts[r].ionN.type))
+						{
+							//make sure to check double replacement
+						}
+						else if(!isSoluble(parts[r].ionP.type, parts[i].ionN.type))
+						{
+
+						}
+					}
+					//TODO: common ion effect
 				}
 				else if ((TYP(r) == PT_RBDM || TYP(r) == PT_LRBD || TYP(r) == PT_SDUM) && (sim->legacy_enable || parts[i].temp > (273.15f + 12.0f)) && !(rand() % 100))
 				{

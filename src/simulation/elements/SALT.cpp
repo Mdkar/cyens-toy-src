@@ -1,4 +1,5 @@
 #include "simulation/ElementCommon.h"
+static void create(ELEMENT_CREATE_FUNC_ARGS);
 
 void Element::Element_SALT()
 {
@@ -40,4 +41,16 @@ void Element::Element_SALT()
 	LowTemperatureTransition = NT;
 	HighTemperature = 1173.0f;
 	HighTemperatureTransition = PT_LAVA;
+
+	Create = &create;
+}
+
+static void create(ELEMENT_CREATE_FUNC_ARGS)
+{
+	sim->parts[i].ionP.type = PT_NA;
+	sim->parts[i].ionP.number = 1;
+	sim->parts[i].ionP.charge = 1;
+	sim->parts[i].ionN.type = PT_CL;
+	sim->parts[i].ionN.number = 1;
+	sim->parts[i].ionN.charge = -1;
 }

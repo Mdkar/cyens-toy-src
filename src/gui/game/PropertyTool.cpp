@@ -89,6 +89,7 @@ void PropertyWindow::SetProperty()
 			switch (properties[property->GetOption().second].Type)
 			{
 			case StructProperty::IonStruct:
+			case StructProperty::Vector:
 			{
 				int v;
 				int n;
@@ -302,6 +303,17 @@ void PropertyTool::SetProperty(Simulation* sim, ui::Point position)
 		break;
 	case StructProperty::IonStruct:
 		*((ion*)(((char*)& sim->parts[ID(i)]) + propOffset)) = propValue.IonStruct;
+		break;
+	case StructProperty::Vector:
+		if(sim->parts[ID(i)].ions == NULL){
+			std::cout << "Created vector" << '\n';
+			sim->parts[ID(i)].ions = new std::vector<ion>();
+		}
+		if(!std::count(sim->parts[ID(i)].ions->begin(), sim->parts[ID(i)].ions->end(), propValue.IonStruct.type))
+		{
+			sim->parts[ID(i)].ions->push_back(propValue.IonStruct);
+			std::cout << "pushed value "<< sim->parts[ID(i)].ions->at(0).type << '\n';
+		}
 		break;
 	case StructProperty::UInteger:
 		*((unsigned int*)(((char*)& sim->parts[ID(i)]) + propOffset)) = propValue.UInteger;
