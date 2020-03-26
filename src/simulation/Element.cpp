@@ -26,6 +26,10 @@ Element::Element() :
 	Meltable(0),
 	Hardness(30),
 	PhotonReflectWavelengths(0x3FFFFFFF),
+	// broken state
+	pressureresistance(0.f),
+	pressureblock(false),
+	defaultbreak(false),
 
 	Weight(50),
 
@@ -42,6 +46,18 @@ Element::Element() :
 	LowTemperatureTransition(NT),
 	HighTemperature(ITH),
 	HighTemperatureTransition(NT),
+	// new transitions
+	GasTemperaturetransition(MAX_TEMP+1.f),
+	GasTransition(-1),
+	PlsmTemperaturetransition(-1.f),
+	solidtransition(0),
+	// heat latent transition not fully not fully Removed -lazy
+	Liquidtransition(-1.f),
+	SolidLiquidlatent(0.f),
+	LiquidGaslatent(0.f),
+	GasPlsmlatent(5000.f), // default
+	// radioactive special reacion not fully removed
+	specialupdate(false),
 
 	Update(nullptr),
 	Graphics(&Element::defaultGraphics),
@@ -56,7 +72,7 @@ std::vector<StructProperty> const& Element::GetProperties()
 {
 	static std::vector<StructProperty> properties = {
 		{ "Name",                      StructProperty::String,   offsetof(Element, Name) },
-		{ "FullName",				   StructProperty::String,   offsetof(Element, FullName) },
+		{ "FullName",				   				 StructProperty::String,   offsetof(Element, FullName) },
 		{ "Colour",                    StructProperty::Colour,   offsetof(Element, Colour) },
 		{ "Color",                     StructProperty::Colour,   offsetof(Element, Colour) },
 		{ "MenuVisible",               StructProperty::Integer,  offsetof(Element, MenuVisible) },
@@ -77,20 +93,32 @@ std::vector<StructProperty> const& Element::GetProperties()
 		{ "Meltable",                  StructProperty::Integer,  offsetof(Element, Meltable) },
 		{ "Hardness",                  StructProperty::Integer,  offsetof(Element, Hardness) },
 		{ "PhotonReflectWavelengths",  StructProperty::UInteger, offsetof(Element, PhotonReflectWavelengths) },
+		{ "pressureresistance",        StructProperty::Float,    offsetof(Element, pressureresistance) },
+		{ "pressureblock",             StructProperty::Integer,  offsetof(Element, pressureblock) },
+		{ "defaultbreak",              StructProperty::Integer,  offsetof(Element, defaultbreak) },
 		{ "Weight",                    StructProperty::Integer,  offsetof(Element, Weight) },
 		{ "Temperature",               StructProperty::Float,    offsetof(Element, DefaultProperties.temp) },
 		{ "HeatConduct",               StructProperty::UChar,    offsetof(Element, HeatConduct) },
 		{ "Description",               StructProperty::String,   offsetof(Element, Description) },
 		{ "State",                     StructProperty::Removed,  0                                            },
-		{ "Properties",                StructProperty::Integer,  offsetof(Element, Properties) },
-		{ "LowPressure",               StructProperty::Float,    offsetof(Element, LowPressure) },
+		{ "Properties",                StructProperty::Integer,  				offsetof(Element, Properties) },
+		{ "LowPressure",               StructProperty::Float,    				offsetof(Element, LowPressure) },
 		{ "LowPressureTransition",     StructProperty::TransitionType,  offsetof(Element, LowPressureTransition) },
-		{ "HighPressure",              StructProperty::Float,    offsetof(Element, HighPressure) },
+		{ "HighPressure",              StructProperty::Float,    				offsetof(Element, HighPressure) },
 		{ "HighPressureTransition",    StructProperty::TransitionType,  offsetof(Element, HighPressureTransition) },
-		{ "LowTemperature",            StructProperty::Float,    offsetof(Element, LowTemperature) },
+		{ "LowTemperature",            StructProperty::Float,    				offsetof(Element, LowTemperature) },
 		{ "LowTemperatureTransition",  StructProperty::TransitionType,  offsetof(Element, LowTemperatureTransition) },
-		{ "HighTemperature",           StructProperty::Float,    offsetof(Element, HighTemperature) },
-		{ "HighTemperatureTransition", StructProperty::TransitionType,  offsetof(Element, HighTemperatureTransition) }
+		{ "HighTemperature",           StructProperty::Float,    				offsetof(Element, HighTemperature) },
+		{ "HighTemperatureTransition", StructProperty::TransitionType,  offsetof(Element, HighTemperatureTransition) },
+		{ "GasTemperaturetransition",  StructProperty::TransitionType,  offsetof(Element, GasTemperaturetransition) },
+		{ "GasTransition",  					 StructProperty::TransitionType,  offsetof(Element, GasTransition) },
+		{ "PlsmTemperaturetransition", StructProperty::TransitionType,  offsetof(Element, PlsmTemperaturetransition) },
+		{ "solidtransition",  				 StructProperty::TransitionType,  offsetof(Element, solidtransition) },
+		{ "Liquidtransition",  				 StructProperty::TransitionType,  offsetof(Element, Liquidtransition) },
+		{ "SolidLiquidlatent",         StructProperty::Float,    				offsetof(Element, SolidLiquidlatent) },
+		{ "LiquidGaslatent",           StructProperty::Float,    				offsetof(Element, LiquidGaslatent) },
+		{ "GasPlsmlatent",         		 StructProperty::Float,    				offsetof(Element, GasPlsmlatent) },
+		{ "specialupdate",             StructProperty::Integer,  				offsetof(Element, specialupdate) }
 	};
 	return properties;
 }

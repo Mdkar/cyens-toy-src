@@ -107,11 +107,11 @@ static int update(UPDATE_FUNC_ARGS)
 
 				j = sim->create_part(-3, x, y, PT_NEUT);
 				if (j != -1)
-					parts[j].temp = MAX_TEMP;
+					parts[j].temp = MAX_TEMP_OLD;
 				j = sim->create_part(-3, x, y, PT_PHOT);
 				if (j != -1)
 				{
-					parts[j].temp = MAX_TEMP;
+					parts[j].temp = MAX_TEMP_OLD;
 					parts[j].tmp = 0x1;
 				}
 				rx = x + RNG::Ref().between(-1, 1), ry = y + RNG::Ref().between(-1, 1), r = TYP(pmap[ry][rx]);
@@ -120,14 +120,14 @@ static int update(UPDATE_FUNC_ARGS)
 					j = sim->create_part(-3, rx, ry, PT_PLSM);
 					if (j > -1)
 					{
-						parts[j].temp = MAX_TEMP;
+						parts[j].temp = MAX_TEMP_OLD;
 						parts[j].tmp |= 4;
 					}
 				}
 				j = sim->create_part(-3, x, y, PT_GRVT);
 				if (j != -1)
-					parts[j].temp = MAX_TEMP;
-				parts[i].temp = MAX_TEMP;
+					parts[j].temp = MAX_TEMP_OLD;
+				parts[i].temp = MAX_TEMP_OLD;
 				sim->pv[y / CELL][x / CELL] = 256;
 			}
 		}

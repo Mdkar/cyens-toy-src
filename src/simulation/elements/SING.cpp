@@ -95,7 +95,7 @@ static int update(UPDATE_FUNC_ARGS)
 			}
 			if (nb!=-1) {
 				parts[nb].life = RNG::Ref().between(0, 299);
-				parts[nb].temp = MAX_TEMP/2;
+				parts[nb].temp = MAX_TEMP_OLD/2;
 				angle = RNG::Ref().uniform01()*2.0f*M_PI;
 				v = RNG::Ref().uniform01()*5.0f;
 				parts[nb].vx = v*cosf(angle);

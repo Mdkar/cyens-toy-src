@@ -70,7 +70,7 @@ static int update(UPDATE_FUNC_ARGS)
 		if (RNG::Ref().chance(1, 2))
 		{
 			sim->create_part(ID(r), x + rx, y + ry, PT_NEUT);
-			parts[ID(r)].temp = MAX_TEMP;
+			parts[ID(r)].temp = MAX_TEMP_OLD;
 			sim->pv[y / CELL][x / CELL] += 10.0f;
 			parts[i].life -= 4;
 		}
@@ -87,8 +87,8 @@ static int update(UPDATE_FUNC_ARGS)
 			parts[i].life = 1;
 	}
 	else if (sim->elements[rt].HeatConduct)
-		parts[ID(r)].temp = MAX_TEMP;
-	parts[i].temp = MAX_TEMP;
+		parts[ID(r)].temp = MAX_TEMP_OLD;
+	parts[i].temp = MAX_TEMP_OLD;
 	sim->pv[y / CELL][x / CELL] += 80.0f;
 	return 0;
 }

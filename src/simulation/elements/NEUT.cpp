@@ -78,7 +78,7 @@ static int update(UPDATE_FUNC_ARGS)
 						if (RNG::Ref().chance(1, 3))
 						{
 							sim->create_part(ID(r), x+rx, y+ry, RNG::Ref().chance(2, 3) ? PT_LAVA : PT_URAN);
-							parts[ID(r)].temp = MAX_TEMP;
+							parts[ID(r)].temp = MAX_TEMP_OLD;
 							if (parts[ID(r)].type==PT_LAVA) {
 								parts[ID(r)].tmp = 100;
 								parts[ID(r)].ctype = PT_PLUT;

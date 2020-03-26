@@ -35,11 +35,10 @@ public:
 	int Explosive;
 	int Meltable;
 	int Hardness;
-	float Temperature;
 	// broken state
-	float pressureresistance = 0.f;
-	bool pressureblock = false;
-	bool defaultbreak = false;
+	float pressureresistance;
+	bool pressureblock;
+	bool defaultbreak;
 	// Photon wavelengths are ANDed with this value when a photon hits an element, meaning that only wavelengths present in both this value and the original photon will remain in the reflected photon
 	unsigned int PhotonReflectWavelengths;
 	int Weight;
@@ -56,17 +55,17 @@ public:
 	float HighTemperature;
 	int HighTemperatureTransition;
 	// new transitions
-	float GasTemperaturetransition = MAX_TEMP+1.f;
-	int GasTransition = -1;
-	float PlsmTemperaturetransition = -1.f;
-	float solidtransition = 0;
+	float GasTemperaturetransition;
+	int GasTransition;
+	float PlsmTemperaturetransition;
+	float solidtransition;
 	// heat latent transition not fully not fully Removed -lazy
-	float Liquidtransition = -1.f;
-	float SolidLiquidlatent = 0.f;
-	float LiquidGaslatent = 0.f;
-	float GasPlsmlatent = 5000.f; // default
+	float Liquidtransition;
+	float SolidLiquidlatent;
+	float LiquidGaslatent;
+	float GasPlsmlatent; // default
 	// radioactive special reacion not fully removed
-	bool specialupdate = false;
+	bool specialupdate;
 
 	int (*Update) (UPDATE_FUNC_ARGS);
 	int (*Graphics) (GRAPHICS_FUNC_ARGS);
