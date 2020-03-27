@@ -69,13 +69,13 @@ static int update(UPDATE_FUNC_ARGS)
 					float m = parts[i].vy / parts[i].vx;
 					for (int xx = 0; xx <= parts[i].vx * s; xx++) {
 						float yy = y + m * xx;
-						if (sim->elements[TYP(pmap[(int)yy][x + xx])].Properties & TYPE_SOLID)break;
-						sim->create_part(-1, x + xx, yy, PT_SMKE);
+						if (sim->elements[TYP(pmap[(int)yy][x + xx])].Properties & TYPE_SOLID && parts[pmap[(int)yy][x+xx]].tmp2 < 1000)break;
+							sim->create_part(-1, x + xx, yy, PT_SMKE);
 					}
 					for (int xx = 0; xx >= -parts[i].vx * s / 2; xx--) {
 						float yy = y + m * xx;
-						if (sim->elements[TYP(pmap[(int)yy][x + xx])].Properties & TYPE_SOLID)break;
-						sim->create_part(-1, x + xx, yy, PT_SMKE);
+						if (sim->elements[TYP(pmap[(int)yy][x + xx])].Properties & TYPE_SOLID && parts[pmap[(int)yy][x+xx]].tmp2 < 1000)break;
+							sim->create_part(-1, x + xx, yy, PT_SMKE);
 					}
 				}
 			}
