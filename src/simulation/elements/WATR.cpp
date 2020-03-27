@@ -1,4 +1,5 @@
 #include "simulation/ElementCommon.h"
+#include <iostream>
 
 static int update(UPDATE_FUNC_ARGS);
 
@@ -106,17 +107,21 @@ static int update(UPDATE_FUNC_ARGS)
 					parts[ID(r)].ionN.charge = charge;
 
 				}
-				if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50) && isSoluble(parts[r].ionP.type, parts[r].ionN.type))
+				else if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50) && isSoluble(parts[ID(r)].ionP.type, parts[ID(r)].ionN.type))
 				{
 					//sim->part_change_type(i, x, y, PT_SLTW);
 					// on average, convert 3 WATR to SLTW before SALT turns into SLTW
 					if (!hasIons(parts[i]) && RNG::Ref().chance(1, 2))//replace chance with solubility?
 					{
 						sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);
-						if (RNG::Ref().chance(999, 1000))
+						parts[ID(r)].ions = new std::vector<ion>();
+						parts[ID(r)].ions->push_back(parts[ID(r)].ionP);
+						parts[ID(r)].ions->push_back(parts[ID(r)].ionN);
+
+						if (RNG::Ref().chance(99, 100))
 							sim->kill_part(i); //increase volume tiny amount
 					}
-					if (hasIons(parts[i])) //TODO: precipitation reaction
+					/*if (hasIons(parts[i])) //TODO: precipitation reaction
 					{
 						if(!isSoluble(parts[i].ionP.type, parts[r].ionN.type))
 						{
@@ -126,7 +131,7 @@ static int update(UPDATE_FUNC_ARGS)
 						{
 
 						}
-					}
+					}*/
 					//TODO: common ion effect
 				}
 				else if ((TYP(r) == PT_RBDM || TYP(r) == PT_LRBD || TYP(r) == PT_SDUM) && (sim->legacy_enable || parts[i].temp > (273.15f + 12.0f)) && !(rand() % 100))

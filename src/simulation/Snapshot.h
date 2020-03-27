@@ -14,6 +14,7 @@ public:
 	std::vector<float> AmbientHeat;
 
 	std::vector<Particle> Particles;
+	//std::vector<std::vector<ion>> Ions;
 
 	std::vector<float> GravVelocityX;
 	std::vector<float> GravVelocityY;
@@ -40,6 +41,7 @@ public:
 		AirVelocityY(),
 		AmbientHeat(),
 		Particles(),
+		//Ions(),
 		GravVelocityX(),
 		GravVelocityY(),
 		GravValue(),

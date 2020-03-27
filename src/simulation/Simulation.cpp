@@ -520,6 +520,14 @@ Snapshot* Simulation::CreateSnapshot()
 	snap->AirVelocityY.insert(snap->AirVelocityY.begin(), &vy[0][0], &vy[0][0] + ((XRES / CELL) * (YRES / CELL)));
 	snap->AmbientHeat.insert(snap->AmbientHeat.begin(), &hv[0][0], &hv[0][0] + ((XRES / CELL) * (YRES / CELL)));
 	snap->Particles.insert(snap->Particles.begin(), parts, parts + parts_lastActiveIndex + 1);
+	/*for(int j = parts_lastActiveIndex; j >= 0; j--){
+		if(parts[j].ions != NULL){
+			snap->Ions.insert(snap->Ions.begin(), *(parts[j].ions));
+		} else {
+			std::vector<ion> v;
+			snap->Ions.insert(snap->Ions.begin(), v);
+		}
+	}*/
 	snap->PortalParticles.insert(snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[CHANNELS - 1][8 - 1][80 - 1]);
 	snap->WirelessData.insert(snap->WirelessData.begin(), &wireless[0][0], &wireless[CHANNELS - 1][2 - 1]);
 	snap->GravVelocityX.insert(snap->GravVelocityX.begin(), gravx, gravx + ((XRES / CELL) * (YRES / CELL)));
@@ -2240,8 +2248,11 @@ void Simulation::clear_sim(void)
 	memset(bmap, 0, sizeof(bmap));
 	memset(emap, 0, sizeof(emap));
 	memset(parts, 0, sizeof(Particle) * NPART);
-	for (int i = 0; i < NPART - 1; i++)
+	for (int i = 0; i < NPART - 1; i++){
+		if(parts[i].ions != NULL)
+			delete parts[i].ions;
 		parts[i].life = i + 1;
+	}
 	parts[NPART - 1].life = -1;
 	pfree = 0;
 	parts_lastActiveIndex = 0;
@@ -3066,7 +3077,9 @@ int Simulation::get_normal_interp(int pt, float x0, float y0, float dx, float dy
 
 void Simulation::kill_part(int i)//kills particle number i
 {
-	delete parts[i].ions;
+	if(parts[i].ions != NULL) //idk why, but this is needed
+		delete parts[i].ions;
+
 	int x = (int)(parts[i].x + 0.5f);
 	int y = (int)(parts[i].y + 0.5f);
 

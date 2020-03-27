@@ -2290,6 +2290,33 @@ void GameView::OnDraw()
 					{
 						sampleInfo << sample.particle.ionN.number;
 					}
+				} else {
+					sampleInfo << "none";
+				}
+				if(sample.particle.ions != NULL){
+					for(int j = 0; j < sample.particle.ions->size(); j++){
+						ion sampleIon = sample.particle.ions->at(j);
+						sampleInfo << "[" << c->ElementResolve((int)sampleIon.type, -1);
+						if(sampleIon.charge < -1){
+							sampleInfo << sampleIon.charge;
+						} else if(sampleIon.charge == -1){
+							sampleInfo << "-";
+						} else if(sampleIon.charge >= 1){
+							sampleInfo << "+";
+								if(sampleIon.charge > 1){
+									sampleInfo << sampleIon.charge;
+								}
+						} else {
+							sampleInfo << sampleIon.charge;
+						}
+						sampleInfo<< "]";
+						if(sampleIon.number != 1)
+						{
+							sampleInfo << sample.particle.ionN.number;
+						}
+					}
+				} else {
+					sampleInfo << "NULL";
 				}
 				sampleInfo << ", Temp: " << (sample.particle.temp - 273.15f) << " C";
 				sampleInfo << ", Life: " << sample.particle.life;
