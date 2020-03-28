@@ -3567,7 +3567,7 @@ void Simulation::UpdateParticles(int start, int end)
 			}
 
 			pGravX = pGravY = 0;
-			if (!(elements[t].Properties & TYPE_SOLID && parts[i].tmp2 < 1000))
+			if (!(elements[t].Properties&TYPE_SOLID && parts[i].tmp2 < 1000))
 			{
 				if (elements[t].Gravity)
 				{
@@ -3596,22 +3596,22 @@ void Simulation::UpdateParticles(int start, int end)
 					pGravX += elements[t].NewtonianGravity * gravx[(y / CELL) * (XRES / CELL) + (x / CELL)];
 					pGravY += elements[t].NewtonianGravity * gravy[(y / CELL) * (XRES / CELL) + (x / CELL)];
 				}
+
+
+				//velocity updates for the particle
+				if (t != PT_SPNG || !(parts[i].flags&FLAG_MOVABLE))
+				{
+					parts[i].vx *= elements[t].Loss;
+					parts[i].vy *= elements[t].Loss;
+				}
+				//particle gets velocity from the vx and vy maps
+				parts[i].vx += elements[t].Advection * vx[y / CELL][x / CELL] + pGravX;
+				parts[i].vy += elements[t].Advection * vy[y / CELL][x / CELL] + pGravY;
+
+				//Cyens Toy Local Gravity
+				if (gravityMode == 3)
+					gravmap[(y / CELL) * (XRES / CELL) + (x / CELL)] = elements[t].Weight / 100.0f + ((elements[t].Weight <= 5) * 0.05f * !(elements[t].Properties & TYPE_ENERGY));
 			}
-
-			//velocity updates for the particle
-			if (t != PT_SPNG || !(parts[i].flags & FLAG_MOVABLE))
-			{
-				parts[i].vx *= elements[t].Loss;
-				parts[i].vy *= elements[t].Loss;
-			}
-			//particle gets velocity from the vx and vy maps
-			parts[i].vx += elements[t].Advection * vx[y / CELL][x / CELL] + pGravX;
-			parts[i].vy += elements[t].Advection * vy[y / CELL][x / CELL] + pGravY;
-
-			//Cyens Toy Local Gravity
-			if (gravityMode == 3)
-				gravmap[(y / CELL) * (XRES / CELL) + (x / CELL)] = elements[t].Weight / 100.0f + ((elements[t].Weight <= 5) * 0.05f * !(elements[t].Properties & TYPE_ENERGY));
-
 			if (!canTick) continue; //Time dilation will slow the rest down
 
 			if (elements[t].Diffusion)//the random diffusion that gasses have
@@ -3650,7 +3650,7 @@ void Simulation::UpdateParticles(int start, int end)
 
 			if (!legacy_enable)
 			{
-				if (y - 2 >= 0 && y - 2 < YRES && (elements[t].Properties & TYPE_LIQUID) && (t != PT_GEL || gel_scale > (1 + RNG::Ref().between(0, 254)))) {//some heat convection for liquids
+				if (y - 2 >= 0 && y - 2 < YRES && (elements[t].Properties&TYPE_LIQUID) && (t != PT_GEL || gel_scale > (1 + RNG::Ref().between(0, 254)))) {//some heat convection for liquids
 					r = pmap[y - 2][x];
 					if (!(!r || parts[i].type != TYP(r))) {
 						if (parts[i].temp > parts[ID(r)].temp) {
@@ -3669,7 +3669,7 @@ void Simulation::UpdateParticles(int start, int end)
 				if (t && (t != PT_HSWC || parts[i].life == 10) && RNG::Ref().chance(elements[t].HeatConduct * gel_scale, 250))
 #endif
 				{
-					if (aheat_enable && !(elements[t].Properties & PROP_NOAMBHEAT))
+					if (aheat_enable && !(elements[t].Properties&PROP_NOAMBHEAT))
 					{
 #ifdef REALISTIC
 						c_heat = parts[i].temp * 96.645 / elements[t].HeatConduct * gel_scale * fabs(elements[t].Weight) + hv[y / CELL][x / CELL] * 100 * (pv[y / CELL][x / CELL] + 273.15f) / 256;

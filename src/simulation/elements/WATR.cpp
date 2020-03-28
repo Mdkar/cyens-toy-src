@@ -2,6 +2,7 @@
 #include <iostream>
 
 static int update(UPDATE_FUNC_ARGS);
+static void create(ELEMENT_CREATE_FUNC_ARGS);
 
 void Element::Element_WATR()
 {
@@ -52,6 +53,7 @@ void Element::Element_WATR()
 	GasPlsmlatent = 5000.f;
 
 	Update = &update;
+	Create = &create;
 }
 
 static bool hasIons(Particle part)
@@ -93,27 +95,6 @@ static int update(UPDATE_FUNC_ARGS)
 					std::vector<ion>* temp = parts[ID(r)].ions;
 					parts[ID(r)].ions = parts[i].ions;
 					parts[i].ions = temp;
-					//swap ions
-					// int type, num, charge;
-					// type = parts[i].ionP.type;
-					// num = parts[i].ionP.number;
-					// charge = parts[i].ionP.charge;
-					// parts[i].ionP.type = parts[ID(r)].ionP.type;
-					// parts[i].ionP.number = parts[ID(r)].ionP.number;
-					// parts[i].ionP.charge = parts[ID(r)].ionP.charge;
-					// parts[ID(r)].ionP.type = type;
-					// parts[ID(r)].ionP.number = num;
-					// parts[ID(r)].ionP.charge = charge;
-					// type = parts[i].ionN.type;
-					// num = parts[i].ionN.number;
-					// charge = parts[i].ionN.charge;
-					// parts[i].ionN.type = parts[ID(r)].ionN.type;
-					// parts[i].ionN.number = parts[ID(r)].ionN.number;
-					// parts[i].ionN.charge = parts[ID(r)].ionN.charge;
-					// parts[ID(r)].ionN.type = type;
-					// parts[ID(r)].ionN.number = num;
-					// parts[ID(r)].ionN.charge = charge;
-
 				}
 				else if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50) && isSoluble(parts[ID(r)].ionP.type, parts[ID(r)].ionN.type))
 				{
@@ -182,4 +163,21 @@ static int update(UPDATE_FUNC_ARGS)
 		sim->part_change_type(i, x, y, PT_DSTW);
 	}
 	return 0;
+}
+
+static void create(ELEMENT_CREATE_FUNC_ARGS)
+{
+	if(sim->parts[i].ions == NULL){
+		sim->parts[i].ions = new std::vector<ion>();
+		ion p = ion();
+		ion n = ion();
+		p.type = PT_H;
+		p.number = 1;
+		p.charge = 1;
+		n.type = PT_HXDE;
+		n.number = 1;
+		n.charge = -1;
+		sim->parts[i].ions->push_back(p);
+		sim->parts[i].ions->push_back(n);
+	}
 }
