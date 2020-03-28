@@ -72,6 +72,11 @@ static bool isSoluble(int cat, int an)//TODO: add polyatomic ions
 	}
 	return false;
 }
+static void copyIons(ion *copy, ion old){
+	copy->type = old.type;
+	copy->number = old.number;
+	copy->charge = old.charge;
+}
 
 static int update(UPDATE_FUNC_ARGS)
 {
@@ -83,43 +88,62 @@ static int update(UPDATE_FUNC_ARGS)
 				r = pmap[y + ry][x + rx];
 				if (!r)
 					continue;
-				if(TYP(r) == PT_WATR && RNG::Ref().chance(1, 10) && (hasIons(parts[ID(r)]) || hasIons(parts[i])))
+				if(TYP(r) == PT_WATR && RNG::Ref().chance(1, 10) && (parts[ID(r)].ions != NULL || parts[i].ions != NULL))
 				{
+					std::vector<ion>* temp = parts[ID(r)].ions;
+					parts[ID(r)].ions = parts[i].ions;
+					parts[i].ions = temp;
 					//swap ions
-					int type, num, charge;
-					type = parts[i].ionP.type;
-					num = parts[i].ionP.number;
-					charge = parts[i].ionP.charge;
-					parts[i].ionP.type = parts[ID(r)].ionP.type;
-					parts[i].ionP.number = parts[ID(r)].ionP.number;
-					parts[i].ionP.charge = parts[ID(r)].ionP.charge;
-					parts[ID(r)].ionP.type = type;
-					parts[ID(r)].ionP.number = num;
-					parts[ID(r)].ionP.charge = charge;
-					type = parts[i].ionN.type;
-					num = parts[i].ionN.number;
-					charge = parts[i].ionN.charge;
-					parts[i].ionN.type = parts[ID(r)].ionN.type;
-					parts[i].ionN.number = parts[ID(r)].ionN.number;
-					parts[i].ionN.charge = parts[ID(r)].ionN.charge;
-					parts[ID(r)].ionN.type = type;
-					parts[ID(r)].ionN.number = num;
-					parts[ID(r)].ionN.charge = charge;
+					// int type, num, charge;
+					// type = parts[i].ionP.type;
+					// num = parts[i].ionP.number;
+					// charge = parts[i].ionP.charge;
+					// parts[i].ionP.type = parts[ID(r)].ionP.type;
+					// parts[i].ionP.number = parts[ID(r)].ionP.number;
+					// parts[i].ionP.charge = parts[ID(r)].ionP.charge;
+					// parts[ID(r)].ionP.type = type;
+					// parts[ID(r)].ionP.number = num;
+					// parts[ID(r)].ionP.charge = charge;
+					// type = parts[i].ionN.type;
+					// num = parts[i].ionN.number;
+					// charge = parts[i].ionN.charge;
+					// parts[i].ionN.type = parts[ID(r)].ionN.type;
+					// parts[i].ionN.number = parts[ID(r)].ionN.number;
+					// parts[i].ionN.charge = parts[ID(r)].ionN.charge;
+					// parts[ID(r)].ionN.type = type;
+					// parts[ID(r)].ionN.number = num;
+					// parts[ID(r)].ionN.charge = charge;
 
 				}
 				else if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50) && isSoluble(parts[ID(r)].ionP.type, parts[ID(r)].ionN.type))
 				{
 					//sim->part_change_type(i, x, y, PT_SLTW);
 					// on average, convert 3 WATR to SLTW before SALT turns into SLTW
-					if (!hasIons(parts[i]) && RNG::Ref().chance(1, 2))//replace chance with solubility?
+					if (RNG::Ref().chance(1, 2))//replace chance with solubility?
 					{
-						sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);
-						parts[ID(r)].ions = new std::vector<ion>();
-						parts[ID(r)].ions->push_back(parts[ID(r)].ionP);
-						parts[ID(r)].ions->push_back(parts[ID(r)].ionN);
+						if(parts[i].ions == NULL){
+							parts[i].ions = new std::vector<ion>();
+						}
+						std::vector<ion> temp = *(parts[i].ions);
+						if(!std::count(temp.begin(), temp.end(), parts[ID(r)].ionP.type) && !std::count(temp.begin(), temp.end(), parts[ID(r)].ionN.type)){
+							ion p = ion();
+							ion n = ion();
+							copyIons(&p,parts[ID(r)].ionP);
+							copyIons(&n,parts[ID(r)].ionN);
+							std::cout << "\np type:"<<parts[ID(r)].ionP.type;
+							std::cout << "\n*p type:"<<p.type;
+							parts[i].ions->push_back(p);
+							parts[i].ions->push_back(n);
 
-						if (RNG::Ref().chance(99, 100))
-							sim->kill_part(i); //increase volume tiny amount
+							if (RNG::Ref().chance(99, 100)){
+								sim->kill_part(ID(r));
+							}	else {
+								sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);//increase volume tiny amount
+								parts[ID(r)].ionP.type = 0;
+								parts[ID(r)].ionN.type = 0;
+							}
+						}
+
 					}
 					/*if (hasIons(parts[i])) //TODO: precipitation reaction
 					{
