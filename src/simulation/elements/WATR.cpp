@@ -88,7 +88,7 @@ static int update(UPDATE_FUNC_ARGS)
 				r = pmap[y + ry][x + rx];
 				if (!r)
 					continue;
-				if(TYP(r) == PT_WATR && RNG::Ref().chance(1, 10) && (parts[ID(r)].ions != NULL || parts[i].ions != NULL))
+				if((TYP(r) == PT_WATR || TYP(r) == PT_DSTW) && RNG::Ref().chance(1, 10) && (parts[ID(r)].ions != NULL || parts[i].ions != NULL))
 				{
 					std::vector<ion>* temp = parts[ID(r)].ions;
 					parts[ID(r)].ions = parts[i].ions;
@@ -130,15 +130,13 @@ static int update(UPDATE_FUNC_ARGS)
 							ion n = ion();
 							copyIons(&p,parts[ID(r)].ionP);
 							copyIons(&n,parts[ID(r)].ionN);
-							std::cout << "\np type:"<<parts[ID(r)].ionP.type;
-							std::cout << "\n*p type:"<<p.type;
 							parts[i].ions->push_back(p);
 							parts[i].ions->push_back(n);
 
 							if (RNG::Ref().chance(99, 100)){
 								sim->kill_part(ID(r));
 							}	else {
-								sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);//increase volume tiny amount
+								sim->part_change_type(ID(r), x + rx, y + ry, PT_DSTW);//increase volume tiny amount
 								parts[ID(r)].ionP.type = 0;
 								parts[ID(r)].ionN.type = 0;
 							}
@@ -175,10 +173,13 @@ static int update(UPDATE_FUNC_ARGS)
 						return 1;
 					}
 				}
-				else if (TYP(r) == PT_SLTW && RNG::Ref().chance(1, 2000))
-				{
-					sim->part_change_type(i, x, y, PT_SLTW);
-				}
+				// else if (TYP(r) == PT_SLTW && RNG::Ref().chance(1, 2000))
+				// {
+				// 	sim->part_change_type(i, x, y, PT_SLTW);
+				// }
 			}
+	if(parts[i].ions == NULL){
+		sim->part_change_type(i, x, y, PT_DSTW);
+	}
 	return 0;
 }

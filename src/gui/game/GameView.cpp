@@ -2290,8 +2290,6 @@ void GameView::OnDraw()
 					{
 						sampleInfo << sample.particle.ionN.number;
 					}
-				} else {
-					sampleInfo << "none";
 				}
 				if(sample.particle.ions != NULL){
 					for(int j = 0; j < sample.particle.ions->size(); j++){
@@ -2315,8 +2313,6 @@ void GameView::OnDraw()
 							sampleInfo << sample.particle.ionN.number;
 						}
 					}
-				} else {
-					sampleInfo << "NULL";
 				}
 				sampleInfo << ", Temp: " << (sample.particle.temp - 273.15f) << " C";
 				sampleInfo << ", Life: " << sample.particle.life;
