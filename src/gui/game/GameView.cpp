@@ -2310,7 +2310,7 @@ void GameView::OnDraw()
 						sampleInfo<< "]";
 						if(sampleIon.number != 1)
 						{
-							sampleInfo << sample.particle.ionN.number;
+							sampleInfo << sampleIon.number;
 						}
 					}
 				}

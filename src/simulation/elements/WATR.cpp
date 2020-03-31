@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include <iostream>
+#include <algorithm>
 
 static int update(UPDATE_FUNC_ARGS);
 static void create(ELEMENT_CREATE_FUNC_ARGS);
@@ -72,6 +73,13 @@ static bool isSoluble(int cat, int an)//TODO: add polyatomic ions
 		}
 		return true;
 	}
+	if(an == PT_HXDE)
+	{
+		if(cat == PT_CA || cat == PT_SR || cat == PT_BA || cat == PT_H){
+			return true;
+		}
+		return false;
+	}
 	return false;
 }
 static void copyIons(ion *copy, ion old){
@@ -79,10 +87,109 @@ static void copyIons(ion *copy, ion old){
 	copy->number = old.number;
 	copy->charge = old.charge;
 }
+int GCD(int a, int b) {
+   if (b == 0)
+      return a;
+   return GCD(b, a % b);
+}
 
 static int update(UPDATE_FUNC_ARGS)
 {
 	int r, rx, ry;
+	//std::vector<ion> localIons;
+	//std::vector<std::vector<std:array<int, 2>>> points;
+	//bool isReaction;
+	if(parts[i].ions != NULL){
+		// for(int j = 0; j < parts[i].ions->size(); j++)
+		// 	currIons.push_back(parts[i].ions->at(j));
+		for (rx = -1; rx < 2; rx++)
+			for (ry = -1; ry < 2; ry++)
+				if (BOUNDS_CHECK && (rx || ry))
+				{
+					r = pmap[y + ry][x + rx];
+					if (!r)
+						continue;
+					if(ID(r) != i && TYP(r) == PT_WATR && parts[ID(r)].ions != NULL)
+					{
+						for(int j = 0; j < parts[i].ions->size(); j+=2){ //cations first
+							for(int k = 1; k < parts[ID(r)].ions->size(); k+=2){
+								if(!isSoluble(parts[i].ions->at(j).type, parts[ID(r)].ions->at(k).type)){
+									ion cat = parts[i].ions->at(j);
+									ion an = parts[ID(r)].ions->at(k);
+									if((cat.charge*cat.number)+(an.charge*an.number) == 0){ //stoichiometrically correct
+										parts[ID(r)].ions->at(k) = parts[i].ions->at(j+1); //swap
+										parts[i].ions->at(j+1) = an;
+										int gcd = GCD(parts[i].ions->at(j+1).number, parts[i].ions->at(j).number);
+										for(int l = 0; l < gcd; l++){
+											int newId = sim->create_part(-1, x, y, PT_GRVT);
+											if(newId != -1){
+												sim->create_part(newId, x, y, PT_SALT);
+												parts[newId].ionP = parts[i].ions->at(j);
+												parts[newId].ionP.number /= gcd;
+												parts[newId].ionN = parts[i].ions->at(j+1);
+												parts[newId].ionN.number /= gcd;
+												parts[i].ions->erase(parts[i].ions->begin()+j+1);
+												parts[i].ions->erase(parts[i].ions->begin()+j);
+											}
+										}
+										gcd = GCD(parts[ID(r)].ions->at(k-1).number, parts[ID(r)].ions->at(k).number);
+										for(int l = 0; l < gcd; l++){
+											int newId = sim->create_part(-1, x + rx, y + ry, PT_GRVT);
+											if(newId != -1){
+												sim->create_part(newId, x + rx, y + ry, PT_SALT);
+												parts[newId].ionN = parts[ID(r)].ions->at(k);
+												parts[newId].ionN.number /= gcd;
+												parts[newId].ionP = parts[ID(r)].ions->at(k-1);
+												parts[newId].ionP.number /= gcd;
+												parts[ID(r)].ions->erase(parts[ID(r)].ions->begin()+k);
+												parts[ID(r)].ions->erase(parts[ID(r)].ions->begin()+k-1);
+												if(parts[ID(r)].ions->size() == 0){
+											 		delete parts[ID(r)].ions;
+													parts[ID(r)].ions = NULL;
+												}
+											}
+										}
+										break;
+									} else { //need more ions
+
+									}
+
+									// isReaction = true;
+									// if(!std::count(localIons.begin(), localIons.end(), parts[ID(r)].ions->at(k))){
+									// 	localIons.push_back(parts[ID(r)].ions->at(k))
+									// 	points.back().back().at(0) = x + rx;
+									// 	points.back().back().at(1) = y + ry;
+									// } else {
+									// 	int ii = std::find(localIons.begin(), localIons.end(), parts[ID(r)].ions->at(k)));
+									// 	localIons[ii].number += parts[ID(r)].ions->at(k).number;
+									// 	points.at(ii).push_back(std:array<int, 2> {x + rx, y + ry});
+									// }
+								}
+							}
+						}
+						// for(int j = 1; j < parts[i].ions->size(); j+=2){ //anions
+						// 	for(int k = 0; k < parts[ID(r)].ions->size(); k+=2){
+						// 		if(!isSoluble(parts[i].ions->at(j).type, parts[ID(r)].ions->at(k).type)){
+						// 			isReaction = true;
+						// 			if(!std::count(localIons.begin(), localIons.end(), parts[ID(r)].ions->at(k))){
+						// 				localIons.push_back(parts[ID(r)].ions->at(k))
+						// 				points.back().back().at(0) = x + rx;
+						// 				points.back().back().at(1) = y + ry;
+						// 			} else {
+						// 				int ii = std::find(localIons.begin(), localIons.end(), parts[ID(r)].ions->at(k)));
+						// 				localIons[ii].number += parts[ID(r)].ions->at(k).number;
+						// 				points.at(ii).push_back(std:array<int, 2> {x + rx, y + ry});
+						// 			}
+						// 		}
+						// 	}
+						// }
+					}
+				}
+		if(parts[i].ions->size() == 0){
+	 		delete parts[i].ions;
+			parts[i].ions = NULL;
+		}
+	}
 	for (rx = -1; rx < 2; rx++)
 		for (ry = -1; ry < 2; ry++)
 			if (BOUNDS_CHECK && (rx || ry))
@@ -90,11 +197,18 @@ static int update(UPDATE_FUNC_ARGS)
 				r = pmap[y + ry][x + rx];
 				if (!r)
 					continue;
-				if((TYP(r) == PT_WATR || TYP(r) == PT_DSTW) && RNG::Ref().chance(1, 10) && (parts[ID(r)].ions != NULL || parts[i].ions != NULL))
+				if(TYP(r) == PT_WATR && RNG::Ref().chance(1, 10) && parts[ID(r)].ions != NULL && parts[i].ions != NULL)
 				{
 					std::vector<ion>* temp = parts[ID(r)].ions;
 					parts[ID(r)].ions = parts[i].ions;
 					parts[i].ions = temp;
+				}
+				else if(TYP(r) == PT_DSTW && RNG::Ref().chance(1, 10) && parts[ID(r)].ions == NULL && parts[i].ions != NULL)
+				{
+					parts[ID(r)].ions = parts[i].ions;
+					parts[i].ions = NULL;
+					sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);
+					sim->part_change_type(i, x, y, PT_DSTW);
 				}
 				else if (TYP(r) == PT_SALT && RNG::Ref().chance(1, 50) && isSoluble(parts[ID(r)].ionP.type, parts[ID(r)].ionN.type))
 				{
@@ -102,24 +216,23 @@ static int update(UPDATE_FUNC_ARGS)
 					// on average, convert 3 WATR to SLTW before SALT turns into SLTW
 					if (RNG::Ref().chance(1, 2))//replace chance with solubility?
 					{
-						if(parts[i].ions == NULL){
-							parts[i].ions = new std::vector<ion>();
-						}
-						std::vector<ion> temp = *(parts[i].ions);
-						if(!std::count(temp.begin(), temp.end(), parts[ID(r)].ionP.type) && !std::count(temp.begin(), temp.end(), parts[ID(r)].ionN.type)){
-							ion p = ion();
-							ion n = ion();
-							copyIons(&p,parts[ID(r)].ionP);
-							copyIons(&n,parts[ID(r)].ionN);
-							parts[i].ions->push_back(p);
-							parts[i].ions->push_back(n);
+						if(parts[i].ions != NULL){
+							std::vector<ion> temp = *(parts[i].ions);
+							if(!std::count(temp.begin(), temp.end(), parts[ID(r)].ionP.type) && !std::count(temp.begin(), temp.end(), parts[ID(r)].ionN.type)){
+								ion p = ion();
+								ion n = ion();
+								copyIons(&p,parts[ID(r)].ionP);
+								copyIons(&n,parts[ID(r)].ionN);
+								parts[i].ions->push_back(p);
+								parts[i].ions->push_back(n);
 
-							if (RNG::Ref().chance(99, 100)){
-								sim->kill_part(ID(r));
-							}	else {
-								sim->part_change_type(ID(r), x + rx, y + ry, PT_DSTW);//increase volume tiny amount
-								parts[ID(r)].ionP.type = 0;
-								parts[ID(r)].ionN.type = 0;
+								if (RNG::Ref().chance(99, 100)){
+									sim->kill_part(ID(r));
+								}	else {
+									sim->part_change_type(ID(r), x + rx, y + ry, PT_DSTW);//increase volume tiny amount
+									parts[ID(r)].ionP.type = 0;
+									parts[ID(r)].ionN.type = 0;
+								}
 							}
 						}
 

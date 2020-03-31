@@ -5201,7 +5201,7 @@ void Simulation::CheckStacking()
 						excessive_stacking_found = 1;
 					}
 				}
-				else if (pmap_count[y][x] > 1500 || (unsigned int)RNG::Ref().between(0, 1599) <= (pmap_count[y][x] + 100))
+				else if (!(TYP(pmap[y][x]) == PT_SALT || TYP(pmap[y][x]) == PT_WATR || TYP(pmap[y][x]) == PT_DSTW) && (pmap_count[y][x] > 1500 || (unsigned int)RNG::Ref().between(0, 1599) <= (pmap_count[y][x] + 100)))
 				{
 					pmap_count[y][x] = pmap_count[y][x] + NPART;
 					excessive_stacking_found = true;

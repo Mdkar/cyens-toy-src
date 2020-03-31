@@ -1,4 +1,5 @@
 #include "simulation/ElementCommon.h"
+#include <iostream>
 
 static int update(UPDATE_FUNC_ARGS);
 
@@ -62,6 +63,13 @@ static bool isSoluble(int cat, int an)//TODO: add polyatomic ions
 		}
 		return true;
 	}
+	if(an == PT_HXDE)
+	{
+		if(cat == PT_CA || cat == PT_SR || cat == PT_BA || cat == PT_H){
+			return true;
+		}
+		return false;
+	}
 	return false;
 }
 static void copyIons(ion *copy, ion old){
@@ -80,12 +88,21 @@ static int update(UPDATE_FUNC_ARGS)
 				switch (TYP(r))
 				{
 				case PT_WATR:
-				case PT_DSTW:
-					if(RNG::Ref().chance(1, 10) && (parts[ID(r)].ions != NULL || parts[i].ions != NULL))
+					if(RNG::Ref().chance(1, 10) && parts[ID(r)].ions != NULL && parts[i].ions == NULL)
 					{
-						std::vector<ion>* temp = parts[ID(r)].ions;
+						parts[i].ions = parts[ID(r)].ions;
+						parts[ID(r)].ions = NULL;
+						sim->part_change_type(ID(r), x + rx, y + ry, PT_DSTW);
+						sim->part_change_type(i, x, y, PT_WATR);
+					}
+					break;
+				case PT_DSTW:
+					if(RNG::Ref().chance(1, 10) && parts[ID(r)].ions == NULL && parts[i].ions != NULL)
+					{
 						parts[ID(r)].ions = parts[i].ions;
-						parts[i].ions = temp;
+						parts[i].ions = NULL;
+						sim->part_change_type(ID(r), x + rx, y + ry, PT_WATR);
+						sim->part_change_type(i, x, y, PT_DSTW);
 					}
 					break;
 				case PT_SALT:
@@ -97,22 +114,22 @@ static int update(UPDATE_FUNC_ARGS)
 						{
 							if(parts[i].ions == NULL){
 								parts[i].ions = new std::vector<ion>();
-							}
-							std::vector<ion> temp = *(parts[i].ions);
-							if(!std::count(temp.begin(), temp.end(), parts[ID(r)].ionP.type) && !std::count(temp.begin(), temp.end(), parts[ID(r)].ionN.type)){
-								ion p = ion();
-								ion n = ion();
-								copyIons(&p,parts[ID(r)].ionP);
-								copyIons(&n,parts[ID(r)].ionN);
-								parts[i].ions->push_back(p);
-								parts[i].ions->push_back(n);
-								sim->part_change_type(i, x, y, PT_WATR);
-								if (RNG::Ref().chance(99, 100)){
-									sim->kill_part(ID(r));
-								}	else {
-									sim->part_change_type(ID(r), x + rx, y + ry, PT_DSTW);//increase volume tiny amount
-									parts[ID(r)].ionP.type = 0;
-									parts[ID(r)].ionN.type = 0;
+								std::vector<ion> temp = *(parts[i].ions);
+								if(!std::count(temp.begin(), temp.end(), parts[ID(r)].ionP.type) && !std::count(temp.begin(), temp.end(), parts[ID(r)].ionN.type)){
+									ion p = ion();
+									ion n = ion();
+									copyIons(&p,parts[ID(r)].ionP);
+									copyIons(&n,parts[ID(r)].ionN);
+									parts[i].ions->push_back(p);
+									parts[i].ions->push_back(n);
+									sim->part_change_type(i, x, y, PT_WATR);
+									if (RNG::Ref().chance(99, 100)){
+										sim->kill_part(ID(r));
+									}	else {
+										sim->part_change_type(ID(r), x + rx, y + ry, PT_DSTW);//increase volume tiny amount
+										parts[ID(r)].ionP.type = 0;
+										parts[ID(r)].ionN.type = 0;
+									}
 								}
 							}
 
