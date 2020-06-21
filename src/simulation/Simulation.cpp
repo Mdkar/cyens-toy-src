@@ -527,6 +527,7 @@ Snapshot* Simulation::CreateSnapshot()
 				temp->push_back(parts[j].ions->at(k));
 			}
 			parts[j].ions = temp;
+		}
 	}
 	snap->PortalParticles.insert(snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[CHANNELS - 1][8 - 1][80 - 1]);
 	snap->WirelessData.insert(snap->WirelessData.begin(), &wireless[0][0], &wireless[CHANNELS - 1][2 - 1]);
