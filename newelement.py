@@ -8,7 +8,9 @@ else:
 	name = sys.argv[1]
 
 if re.search('[^A-Z0-9-]', name):
-	sys.exit('element names should only contain uppercase letters, digits and hyphens (you can change the Name property of the element to whatever later though, which is what shows up in menus)')
+	print('element names should only contain uppercase letters, digits and hyphens (you can change the Name property of the element to whatever later though, which is what shows up in menus)')
+	input('Press [Enter] to close.')
+	sys.exit(1)
 
 path = 'src/simulation/elements/' + name + '.cpp'
 
@@ -21,7 +23,10 @@ def get_elements():
 
 elements = get_elements()
 if name in elements:
-	sys.exit('element already exists')
+	print('element already exists')
+	input('Press [Enter] to close.')
+	sys.exit(1)
+	
 max_id = 0
 for nm, pt in elements.items():
 	pt_id = int(pt)
