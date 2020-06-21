@@ -520,14 +520,14 @@ Snapshot* Simulation::CreateSnapshot()
 	snap->AirVelocityY.insert(snap->AirVelocityY.begin(), &vy[0][0], &vy[0][0] + ((XRES / CELL) * (YRES / CELL)));
 	snap->AmbientHeat.insert(snap->AmbientHeat.begin(), &hv[0][0], &hv[0][0] + ((XRES / CELL) * (YRES / CELL)));
 	snap->Particles.insert(snap->Particles.begin(), parts, parts + parts_lastActiveIndex + 1);
-	/*for(int j = parts_lastActiveIndex; j >= 0; j--){
+	for(int j = parts_lastActiveIndex; j >= 0; j--){
 		if(parts[j].ions != NULL){
-			snap->Ions.insert(snap->Ions.begin(), *(parts[j].ions));
-		} else {
-			std::vector<ion> v;
-			snap->Ions.insert(snap->Ions.begin(), v);
-		}
-	}*/
+			std::vector<ion>* temp = new std::vector<ion>();
+			for(int k = 0; k < parts[j].ions->size(); k++){
+				temp->push_back(parts[j].ions->at(k));
+			}
+			parts[j].ions = temp;
+	}
 	snap->PortalParticles.insert(snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[CHANNELS - 1][8 - 1][80 - 1]);
 	snap->WirelessData.insert(snap->WirelessData.begin(), &wireless[0][0], &wireless[CHANNELS - 1][2 - 1]);
 	snap->GravVelocityX.insert(snap->GravVelocityX.begin(), gravx, gravx + ((XRES / CELL) * (YRES / CELL)));
